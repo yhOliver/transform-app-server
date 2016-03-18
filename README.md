@@ -1,4 +1,6 @@
- ##  用户账号相关的接口
+ # 接口列表
+ 
+ ## 用户账号相关的接口
  
  * 检查账号是否被注册: GET /api/account/checkUser
  * 发送注册验证码: POST /api/account/sendCode
