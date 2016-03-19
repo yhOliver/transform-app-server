@@ -2,7 +2,6 @@ package transform.app.server.api;
 
 import com.jfinal.aop.Before;
 import com.jfinal.aop.Clear;
-import com.jfinal.log.Log4jLog;
 import com.jfinal.plugin.activerecord.Db;
 import transform.app.server.common.Require;
 import transform.app.server.common.bean.*;
@@ -14,15 +13,17 @@ import transform.app.server.common.utils.StringUtils;
 import transform.app.server.config.AppProperty;
 import transform.app.server.interceptor.GET;
 import transform.app.server.interceptor.POST;
-import transform.app.server.interceptor.PUT;
 import transform.app.server.interceptor.TokenInterceptor;
 import transform.app.server.model.RegisterCode;
 import transform.app.server.model.User;
 
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 
+import static transform.app.server.model.RegisterCode.CODE;
 import static transform.app.server.model.User.*;
+
 
 /**
  * 用户账号相关的接口*
@@ -32,15 +33,14 @@ import static transform.app.server.model.User.*;
  * 注册: POST /api/account/register
  * 登录： POST /api/account/login
  * 查询用户资料: GET /api/account/profile
- * 修改用户资料: PUT /api/account/profile
- * 修改密码: PUT /api/account/password
- * 修改头像: PUT /api/account/avatar
+ * 修改用户资料: POST /api/account/profile
+ * 修改密码: POST /api/account/password
+ * 修改头像: POST /api/account/avatar
  *
  * @author malongbo
  */
 @Before(TokenInterceptor.class)
 public class AccountAPIController extends BaseAPIController {
-    private static Log4jLog log = Log4jLog.getLog(AccountAPIController.class);
 
     /**
      * 检查用户账号是否被注册*
@@ -48,13 +48,13 @@ public class AccountAPIController extends BaseAPIController {
     @Clear
     @Before(GET.class)
     public void checkUser() {
-        String loginName = getPara("loginName");
-        if (StringUtils.isEmpty(loginName)) {
-            renderArgumentError("loginName can not be null");
+        String user_mobile = getPara(USER_MOBILE);
+        if (StringUtils.isEmpty(user_mobile)) {
+            renderArgumentError("user mobile can not be null");
             return;
         }
         //检查手机号码是否被注册
-        boolean exists = Db.findFirst("SELECT * FROM t_user WHERE loginName=?", loginName) != null;
+        boolean exists = Db.findFirst("SELECT * FROM tbuser WHERE user_mobile=?", user_mobile) != null;
         renderJson(new BaseResponse(exists ? Code.SUCCESS : Code.FAIL, exists ? "registered" : "unregistered"));
     }
 
@@ -65,38 +65,38 @@ public class AccountAPIController extends BaseAPIController {
     @Clear
     @Before(POST.class)
     public void sendCode() {
-        String loginName = getPara("loginName");
-        if (StringUtils.isEmpty(loginName)) {
-            renderArgumentError("loginName can not be null");
+        String user_mobile = getPara(USER_MOBILE);
+        if (StringUtils.isEmpty(user_mobile)) {
+            renderArgumentError("user mobile can not be null");
             return;
         }
 
         //检查手机号码有效性
-        if (!SMSUtils.isMobileNo(loginName)) {
+        if (!SMSUtils.isMobileNo(user_mobile)) {
             renderArgumentError("mobile number is invalid");
             return;
         }
 
         //检查手机号码是否被注册
-        if (Db.findFirst("SELECT * FROM t_user WHERE loginName=?", loginName) != null) {
+        if (Db.findFirst("SELECT * FROM tbuser WHERE user_mobile=?", user_mobile) != null) {
             renderJson(new BaseResponse(Code.ACCOUNT_EXISTS, "mobile already registered"));
             return;
         }
 
         String smsCode = SMSUtils.randomSMSCode(6);
         //发送短信验证码
-        if (!SMSUtils.sendCode(loginName, smsCode)) {
+        if (!SMSUtils.sendCode(user_mobile, smsCode)) {
             renderFailed("sms send failed");
             return;
         }
 
         //保存验证码数据
         RegisterCode registerCode = new RegisterCode()
-                .set(RegisterCode.MOBILE, loginName)
-                .set(RegisterCode.CODE, smsCode);
+                .set(RegisterCode.MOBILE, user_mobile)
+                .set(CODE, smsCode);
 
         //保存数据
-        if (Db.findFirst("SELECT * FROM t_register_code WHERE mobile=?", loginName) == null) {
+        if (Db.findFirst("SELECT * FROM t_register_code WHERE mobile=?", user_mobile) == null) {
             registerCode.save();
         } else {
             registerCode.update();
@@ -111,50 +111,44 @@ public class AccountAPIController extends BaseAPIController {
     @Before(POST.class)
     public void register() {
         //必填信息
-        String loginName = getPara("loginName");//登录帐号
-        int code = getParaToInt("code", 0);//手机验证码
-        int sex = getParaToInt("sex", 0);//性别
-        String password = getPara("password");//密码
-        String nickName = getPara("nickName");//昵称
-        //头像信息，为空则使用默认头像地址
-        String avatar = getPara("avatar", AppProperty.me().defaultUserAvatar());
+        String user_mobile = getPara(USER_MOBILE);//手机号
+        int code = getParaToInt(CODE, 0);//手机验证码
+        String password = getPara(PWD);//密码 (已经加密过了)
 
         //校验必填项参数
         if (!notNull(Require.me()
-                .put(loginName, "loginName can not be null")
+                .put(user_mobile, "user mobile can not be null")
                 .put(code, "code can not be null")//根据业务需求决定是否使用此字段
-                .put(password, "password can not be null")
-                .put(nickName, "nickName can not be null"))) {
+                .put(password, "password can not be null"))) {
             return;
         }
 
         //检查账户是否已被注册
-        if (Db.findFirst("SELECT * FROM t_user WHERE loginName=?", loginName) != null) {
+        if (Db.findFirst("SELECT * FROM tbuser WHERE user_mobile=?", user_mobile) != null) {
             renderJson(new BaseResponse(Code.ACCOUNT_EXISTS, "mobile already registered"));
             return;
         }
 
-        //检查验证码是否有效, 如果业务不需要，则无需保存此段代码
-        if (Db.findFirst("SELECT * FROM t_register_code WHERE mobile=? AND code = ?", loginName, code) == null) {
+        //检查验证码是否有效
+        if (Db.findFirst("SELECT * FROM t_register_code WHERE mobile=? AND code = ?", user_mobile, code) == null) {
             renderJson(new BaseResponse(Code.CODE_ERROR, "code is invalid"));
             return;
         }
 
         //保存用户数据
         String userId = RandomUtils.randomCustomUUID();
-
+        String avatar = AppProperty.me().defaultUserAvatar();
         new User()
-                .set("userId", userId)
-                .set(User.LOGIN_NAME, loginName)
-                .set(PASSWORD, StringUtils.encodePassword(password, "md5"))
-                .set(NICK_NAME, nickName)
-                .set(User.CREATION_DATE, DateUtils.getNowTimeStamp())
-                .set(User.SEX, sex)
-                .set(AVATAR, avatar)
+                .set(USER_ID, userId)
+                .set(USER_MOBILE, user_mobile)
+                .set(PWD, password)
+                .set(CREATETIME, DateUtils.currentTimeStamp())
+                .set(UPDATETIME, DateUtils.currentTimeStamp())
+                .set(USER_PHOTO, avatar) // 默认头像
                 .save();
 
         //删除验证码记录
-        Db.update("DELETE FROM t_register_code WHERE mobile=? AND code = ?", loginName, code);
+        Db.update("DELETE FROM t_register_code WHERE mobile=? AND code = ?", user_mobile, code);
 
         //返回数据
         renderJson(new BaseResponse("success"));
@@ -167,17 +161,17 @@ public class AccountAPIController extends BaseAPIController {
     @Clear
     @Before(POST.class)
     public void login() {
-        String loginName = getPara("loginName");
-        String password = getPara("password");
+        String user_mobile = getPara(USER_MOBILE);
+        String password = getPara(PWD);
         //校验参数, 确保不能为空
         if (!notNull(Require.me()
-                .put(loginName, "loginName can not be null")
+                .put(user_mobile, "user mobile can not be null")
                 .put(password, "password can not be null")
         )) {
             return;
         }
-        String sql = "SELECT * FROM t_user WHERE loginName=? AND password=?";
-        User nowUser = User.user.findFirst(sql, loginName, StringUtils.encodePassword(password, "md5"));
+        String sql = "SELECT * FROM tbuser WHERE user_mobile=? AND pwd=?";
+        User nowUser = User.user.findFirst(sql, user_mobile, password);
         LoginResponse response = new LoginResponse();
         if (nowUser == null) {
             response.setCode(Code.FAIL).setMessage("userName or password is error");
@@ -185,7 +179,7 @@ public class AccountAPIController extends BaseAPIController {
             return;
         }
         Map<String, Object> userInfo = new HashMap<>(nowUser.getAttrs());
-        userInfo.remove(PASSWORD);
+        userInfo.remove(PWD);
         response.setInfo(userInfo);
         response.setMessage("login success");
         response.setToken(TokenManager.getMe().generateToken(nowUser));
@@ -198,9 +192,9 @@ public class AccountAPIController extends BaseAPIController {
      */
     public void profile() {
         String method = getRequest().getMethod();
-        if ("get".equalsIgnoreCase(method)) { //查询资料
+        if ("GET".equalsIgnoreCase(method)) { //查询资料
             getProfile();
-        } else if ("put".equalsIgnoreCase(method)) { //修改资料
+        } else if ("POST".equalsIgnoreCase(method)) { //修改资料
             updateProfile();
         } else {
             render404();
@@ -212,8 +206,8 @@ public class AccountAPIController extends BaseAPIController {
      * 查询用户资料
      */
     private void getProfile() {
-        String userId = getPara("userId");
-        User resultUser = null;
+        String userId = getPara(USER_ID);
+        User resultUser;
         if (StringUtils.isNotEmpty(userId)) {
             resultUser = User.user.findById(userId);
         } else {
@@ -224,7 +218,7 @@ public class AccountAPIController extends BaseAPIController {
             response.setCode(Code.FAIL).setMessage("user is not found");
         } else {
             HashMap<String, Object> map = new HashMap<>(resultUser.getAttrs());
-            map.remove(PASSWORD);
+            map.remove(PWD);
             response.setDatum(map);
         }
         renderJson(response);
@@ -237,35 +231,62 @@ public class AccountAPIController extends BaseAPIController {
         boolean flag = false;
         BaseResponse response = new BaseResponse();
         User user = getUser();
-        String nickName = getPara("nickName");
+        String nickName = getPara(USER_NICKNAME);
         if (StringUtils.isNotEmpty(nickName)) {
-            user.set(NICK_NAME, nickName);
+            user.set(USER_NICKNAME, nickName);
             flag = true;
         }
 
-        String email = getPara("email");
-        if (StringUtils.isNotEmpty(email)) {
-            user.set(EMAIL, email);
-            flag = true;
-        }
-
-        String avatar = getPara("avatar");
+        String avatar = getPara(USER_PHOTO);
         if (StringUtils.isNotEmpty(avatar)) {
-            user.set(AVATAR, avatar);
+            user.set(USER_PHOTO, avatar);
             flag = true;
         }
 
         //修改性别
-        Integer sex = getParaToInt("sex", null);
+        Integer sex = getParaToInt(USER_SEX, null);
         if (null != sex) {
             if (!User.checkSex(sex)) {
                 renderArgumentError("sex is invalid");
                 return;
             }
-            user.set(SEX, sex);
+            user.set(USER_SEX, sex);
             flag = true;
         }
 
+        //个性签名 USER_SIGNATURE
+        String user_signature = getPara(USER_SIGNATURE);
+        if (StringUtils.isNotEmpty(user_signature)) {
+            user.set(USER_SIGNATURE, user_signature);
+            flag = true;
+        }
+        // USER_ADDRESS
+        String user_address = getPara(USER_ADDRESS);
+        if (StringUtils.isNotEmpty(user_address)) {
+            user.set(USER_ADDRESS, user_address);
+            flag = true;
+        }
+        // USER_BIRTHDAY
+        String user_birthday = getPara(USER_BIRTHDAY);
+        if (StringUtils.isNotEmpty(user_birthday)) {
+            // 生日格式 : yyyy-MM-dd
+            Timestamp birth = DateUtils.getBirthday(user_address);
+            user.set(USER_BIRTHDAY, birth);
+            flag = true;
+        }
+        // USER_HEIGHT
+        String user_height = getPara(USER_HEIGHT);
+        if (StringUtils.isNotEmpty(user_height)) {
+            user.set(USER_HEIGHT, user_height);
+            flag = true;
+        }
+        // USER_WEIGHT
+        String user_weight = getPara(USER_WEIGHT);
+        if (StringUtils.isNotEmpty(user_weight)) {
+            user.set(USER_WEIGHT, user_weight);
+            flag = true;
+        }
+        user.set(UPDATETIME, DateUtils.currentTimeStamp()); // 更新时间
         if (flag) {
             boolean update = user.update();
             renderJson(response.setCode(update ? Code.SUCCESS : Code.FAIL).setMessage(update ? "update success" : "update failed"));
@@ -277,12 +298,8 @@ public class AccountAPIController extends BaseAPIController {
     /**
      * 修改密码
      */
-    @Before(PUT.class)
+    @Before(POST.class)
     public void password() {
-//        if (!"put".equalsIgnoreCase(getRequest().getMethod())) {
-//            render404();
-//            return;
-//        }
         //根据用户id，查出这个用户的密码，再跟传递的旧密码对比，一样就更新，否则提示旧密码错误
         String oldPwd = getPara("oldPwd");
         String newPwd = getPara("newPwd");
@@ -293,8 +310,8 @@ public class AccountAPIController extends BaseAPIController {
         }
         //用户真实的密码
         User nowUser = getUser();
-        if (StringUtils.encodePassword(oldPwd, "md5").equalsIgnoreCase(nowUser.getStr(PASSWORD))) {
-            boolean flag = nowUser.set(PASSWORD, StringUtils.encodePassword(newPwd, "md5")).update();
+        if (oldPwd.equalsIgnoreCase(nowUser.getStr(PWD))) {
+            boolean flag = nowUser.set(PWD, newPwd).update();
             renderJson(new BaseResponse(flag ? Code.SUCCESS : Code.FAIL, flag ? "success" : "failed"));
         } else {
             renderJson(new BaseResponse(Code.FAIL, "oldPwd is invalid"));
@@ -305,18 +322,14 @@ public class AccountAPIController extends BaseAPIController {
      * 修改头像接口
      * /api/account/avatar
      */
-    @Before(PUT.class)
+    @Before(POST.class)
     public void avatar() {
-//        if (!"put".equalsIgnoreCase(getRequest().getMethod())) {
-//            renderJson(new BaseResponse(Code.NOT_FOUND));
-//            return;
-//        }
-        String avatar = getPara("avatar");
+        String avatar = getPara(USER_PHOTO);
         if (!notNull(Require.me()
                 .put(avatar, "avatar url can not be null"))) {
             return;
         }
-        getUser().set(AVATAR, avatar).update();
+        getUser().set(USER_PHOTO, avatar).update();
         renderSuccess("success");
     }
 }

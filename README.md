@@ -1,4 +1,4 @@
-# 接口列表
+# 接口列表 [ 只开放GET与POST ]
  
 ## 用户账号相关的接口
 
@@ -7,9 +7,9 @@
 * 注册: POST /api/account/register
 * 登录： POST /api/account/login
 * 查询用户资料: GET /api/account/profile
-* 修改用户资料: PUT /api/account/profile
-* 修改密码: PUT /api/account/password
-* 修改头像: PUT /api/account/avatar
+* 修改用户资料: POST /api/account/profile
+* 修改密码: POST /api/account/password
+* 修改头像: POST /api/account/avatar
  
 ## 公共模块的api
  

@@ -61,9 +61,9 @@ public class AppConfig extends JFinalConfig {
         me.add(arp);
 
         // TODO 数据库表配置
-        arp.addMapping("t_user", User.USER_ID, User.class);//用户表
+        arp.addMapping("tbuser", User.USER_ID, User.class);//用户表
         arp.addMapping("t_register_code", RegisterCode.MOBILE, RegisterCode.class); //注册验证码对象
-        arp.addMapping("t_feedback", FeedBack.ID, FeedBack.class); //意见反馈表
+        //   arp.addMapping("t_feedback", FeedBack.ID, FeedBack.class); //意见反馈表
 
     }
 

@@ -12,12 +12,11 @@ import transform.app.server.model.User;
 /**
  * Token拦截器
  *
- * @author malongbo
- * @date 15-1-18
- * @package com.pet.project.interceptor
+ * @author zhuqi259
+ *         2016-3-19
  */
 public class TokenInterceptor implements Interceptor {
-    
+
     @Override
     public void intercept(Invocation inv) {
         Controller controller = inv.getController();
