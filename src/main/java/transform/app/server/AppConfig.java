@@ -7,9 +7,7 @@ import transform.app.server.config.Context;
 import transform.app.server.handler.APINotFoundHandler;
 import transform.app.server.handler.ContextHandler;
 import transform.app.server.interceptor.ErrorInterceptor;
-import transform.app.server.model.FeedBack;
-import transform.app.server.model.RegisterCode;
-import transform.app.server.model.User;
+import transform.app.server.model.*;
 import transform.app.server.plugin.HikariCPPlugin;
 import transform.app.server.router.APIRouter;
 
@@ -63,8 +61,12 @@ public class AppConfig extends JFinalConfig {
         // TODO 数据库表配置
         arp.addMapping("tbuser", User.USER_ID, User.class);//用户表
         arp.addMapping("t_register_code", RegisterCode.MOBILE, RegisterCode.class); //注册验证码对象
-        //   arp.addMapping("t_feedback", FeedBack.ID, FeedBack.class); //意见反馈表
+        arp.addMapping("tbvenue", Venue.VENU_ID, Venue.class); //场馆表
+        arp.addMapping("tbsport_typedic", SportType.SPTY_ID, SportType.class); //运动类别表
+        arp.addMapping("tbvenue_sport", VenueSport.VESP_ID, VenueSport.class); //场馆-运动类别关联表
+        arp.addMapping("tbvenue_comment", VenueComment.VECO_ID, VenueComment.class); //场馆评价表
 
+        //   arp.addMapping("t_feedback", FeedBack.ID, FeedBack.class); //意见反馈表
     }
 
     /**
@@ -73,7 +75,6 @@ public class AppConfig extends JFinalConfig {
     @Override
     public void configInterceptor(Interceptors me) {
         me.add(new ErrorInterceptor());
-
     }
 
     /**

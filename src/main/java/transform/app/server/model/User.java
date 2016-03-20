@@ -20,7 +20,6 @@ public class User extends Model<User> {
     public static String NUM_OF_STATUS = "num_of_status";
     public static String USER_BIRTHDAY = "user_birthday";
     public static String USER_SEX = "user_sex";
-    public static String USER_AGE = "user_age";
     public static String USER_HEIGHT = "user_height";
     public static String USER_WEIGHT = "user_weight";
     public static String CREATETIME = "createtime";
@@ -28,9 +27,8 @@ public class User extends Model<User> {
     public static String USER_SIGNATURE = "user_signature";
     public static String STATUS = "status";
 
-
     private static final long serialVersionUID = 1L;
-    public static final User user = new User();
+    public static final User dao = new User();
 
     /**
      * 获取用户id*

@@ -12,6 +12,6 @@ public class RegisterCode extends Model<RegisterCode> {
     
     public static final String CODE = "code";
     
-    public static RegisterCode dao = new RegisterCode();
+    // public static RegisterCode dao = new RegisterCode();
     
 }

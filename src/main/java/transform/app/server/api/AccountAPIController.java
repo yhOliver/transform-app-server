@@ -171,7 +171,7 @@ public class AccountAPIController extends BaseAPIController {
             return;
         }
         String sql = "SELECT * FROM tbuser WHERE user_mobile=? AND pwd=?";
-        User nowUser = User.user.findFirst(sql, user_mobile, password);
+        User nowUser = User.dao.findFirst(sql, user_mobile, password);
         LoginResponse response = new LoginResponse();
         if (nowUser == null) {
             response.setCode(Code.FAIL).setMessage("userName or password is error");
@@ -209,7 +209,7 @@ public class AccountAPIController extends BaseAPIController {
         String userId = getPara(USER_ID);
         User resultUser;
         if (StringUtils.isNotEmpty(userId)) {
-            resultUser = User.user.findById(userId);
+            resultUser = User.dao.findById(userId);
         } else {
             resultUser = getUser();
         }
