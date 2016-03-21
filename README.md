@@ -18,5 +18,6 @@
 ## 场馆相关的接口
 
 * 获取运动类别:          GET  /api/venue/types
-* 分页获取场馆列表:      GET  /api/venue/venues TODO 修改返回值
+* 分页获取场馆列表:      GET  /api/venue/venues [缺少按照距离排序]
+* 模糊查询-按照场馆名称或地址查询场馆列表 TODO
 * 场馆详情:              GET  /api/venue/detail

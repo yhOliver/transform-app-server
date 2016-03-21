@@ -6,6 +6,7 @@ public class Venue extends Model<Venue> {
     public static String VENU_ID = "venu_id";
     public static String VENU_NAME = "venu_name";
     public static String VENU_CITY = "venu_city";
+    public static String VENU_PROPER = "venu_proper";
     public static String VENU_ADDRESS = "venu_address";
     public static String VENU_INFO = "venu_info";
     public static String VENU_FACILITY_INFO = "venu_facility_info";
@@ -15,6 +16,13 @@ public class Venue extends Model<Venue> {
     public static String VENU_LONGITUDE = "venu_longitude";
     public static String VENU_STARTTIME = "venu_starttime";
     public static String VENU_ENDTIME = "venu_endtime";
+    public static String MON = "monday";
+    public static String TUE = "tuesday";
+    public static String WED = "wednesday";
+    public static String THU = "thursday";
+    public static String FRI = "friday";
+    public static String SAT = "saturday";
+    public static String SUN = "sunday";
     public static String VENU_ISONLINE = "venu_isonline";
     public static String HASWIFI = "haswifi";
     public static String HASBATH = "hasbath";
