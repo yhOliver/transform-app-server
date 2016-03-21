@@ -19,5 +19,6 @@
 
 * 获取运动类别:          GET  /api/venue/types
 * 分页获取场馆列表:      GET  /api/venue/venues [缺少按照距离排序]
-* 模糊查询-按照场馆名称或地址查询场馆列表 TODO
+* 模糊查询-按照场馆名称或地址查询场馆列表: POST  /api/venue/search [缺少按照距离排序]
 * 场馆详情:              GET  /api/venue/detail
+* 场馆评价更多分页:      GET  /api/venue/comments
