@@ -55,7 +55,7 @@ public class VenueAPIController extends BaseAPIController {
      * <p>
      * <p>
      * 返回值:
-     * (全部) => group by 分组显示
+     * (全部) => GROUP BY 分组显示
      * (具体类别) => 当前组显示
      * <p>
      * 运动类别名：
@@ -92,7 +92,7 @@ public class VenueAPIController extends BaseAPIController {
              LEFT JOIN (SELECT venu_id , spty_id FROM tbvenue_sport WHERE vesp_isonline = 1) tvs ON tv.venu_id = tvs.venu_id
              LEFT JOIN  (SELECT * FROM  tbsport_typedic ) dic ON dic.spty_id = tvs.spty_id
              GROUP BY tvs.spty_id, tv.venu_name
-             order by distance
+             ORDER BY distance
              */
 
             sb.append("FROM (SELECT * FROM tbvenue WHERE venu_isonline=1 AND venu_city = ? AND ").append(weeks[week]).append("=1 ");
@@ -118,7 +118,7 @@ public class VenueAPIController extends BaseAPIController {
              FROM (SELECT * FROM tbvenue WHERE venu_isonline=1 AND venu_city ='长春市') tv
              LEFT JOIN (SELECT venu_id , spty_id FROM tbvenue_sport WHERE vesp_isonline = 1 AND spty_id='1') tvs ON tv.venu_id = tvs.venu_id
              LEFT JOIN  (SELECT * FROM  tbsport_typedic) dic ON dic.spty_id = tvs.spty_id
-             order by distance
+             ORDER BY distance
              */
             sb.append("FROM (SELECT * FROM tbvenue WHERE venu_isonline=1 AND venu_city = ? AND ").append(weeks[week]).append("=1 ");
             if (StringUtils.isNotEmpty(venu_proper)) {
@@ -156,7 +156,7 @@ public class VenueAPIController extends BaseAPIController {
             return;
         }
         wd = "%" + wd + "%";
-        Page<Venue> venuePage = Venue.dao.paginate(pageNumber, pageSize, "SELECT *", "FROM tbvenue where venu_name like ? or venu_address like ?", wd, wd);
+        Page<Venue> venuePage = Venue.dao.paginate(pageNumber, pageSize, "SELECT *", "FROM tbvenue WHERE venu_name LIKE ? or venu_address LIKE ?", wd, wd);
         renderJson(new PageResponse<>(venuePage));
     }
 

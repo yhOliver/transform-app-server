@@ -10,6 +10,7 @@ public class SportType extends Model<SportType> {
     public static String SPTY_ID = "spty_id";
     public static String SPTY_NAME = "spty_name";
     public static String SPTY_IMG = "spty_img";
+    public static String SPTY_ICON = "spty_icon";
 
     public static final SportType dao = new SportType();
 }
