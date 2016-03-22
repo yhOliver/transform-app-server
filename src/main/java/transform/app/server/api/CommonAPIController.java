@@ -1,6 +1,7 @@
 package transform.app.server.api;
 
 import com.jfinal.aop.Before;
+import com.jfinal.plugin.activerecord.tx.Tx;
 import transform.app.server.common.Require;
 import transform.app.server.common.bean.BaseResponse;
 import transform.app.server.common.bean.Code;
@@ -20,7 +21,7 @@ public class CommonAPIController extends BaseAPIController {
     /**
      * 处理用户意见反馈
      */
-    @Before(TokenInterceptor.class)
+    @Before({TokenInterceptor.class, Tx.class})
     public void feedback() {
         if (!"post".equalsIgnoreCase(getRequest().getMethod())) {
             renderJson(new BaseResponse(Code.NOT_FOUND));

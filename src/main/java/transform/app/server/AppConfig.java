@@ -65,6 +65,7 @@ public class AppConfig extends JFinalConfig {
         arp.addMapping("tbsport_typedic", SportType.SPTY_ID, SportType.class); //运动类别表
         arp.addMapping("tbvenue_sport", VenueSport.VESP_ID, VenueSport.class); //场馆-运动类别关联表
         arp.addMapping("tbvenue_comment", VenueComment.VECO_ID, VenueComment.class); //场馆评价表
+        arp.addMapping("t_distance", Distance.class); //设备-场馆距离表
 
         //   arp.addMapping("t_feedback", FeedBack.ID, FeedBack.class); //意见反馈表
     }

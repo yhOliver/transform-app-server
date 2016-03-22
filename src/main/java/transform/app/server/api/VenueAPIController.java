@@ -1,21 +1,30 @@
 package transform.app.server.api;
 
 import com.jfinal.aop.Before;
+import com.jfinal.aop.Clear;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
+import com.jfinal.plugin.activerecord.tx.Tx;
 import org.joda.time.DateTime;
 import transform.app.server.common.Require;
 import transform.app.server.common.bean.*;
+import transform.app.server.common.utils.DateUtils;
+import transform.app.server.common.utils.MapUtils;
 import transform.app.server.common.utils.StringUtils;
+import transform.app.server.interceptor.DeviceInterceptor;
 import transform.app.server.interceptor.GET;
 import transform.app.server.interceptor.POST;
+import transform.app.server.model.Distance;
 import transform.app.server.model.SportType;
 import transform.app.server.model.Venue;
 import transform.app.server.model.VenueSport;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import static transform.app.server.model.Distance.*;
+import static transform.app.server.model.Distance.VENU_ID;
 import static transform.app.server.model.SportType.SPTY_ID;
 import static transform.app.server.model.Venue.*;
 
@@ -24,19 +33,21 @@ import static transform.app.server.model.Venue.*;
  * 场馆相关的接口*
  * <p>
  * 获取运动类别:      GET /api/venue/types
- * 分页获取场馆列表: GET /api/venue/venues [缺少按照距离排序]
- * 模糊查询-按照场馆名称或地址查询场馆列表: POST /api/venue/search [缺少按照距离排序]
+ * 分页获取场馆列表: POST /api/venue/venues
+ * 模糊查询-按照场馆名称或地址查询场馆列表: POST /api/venue/search
  * 场馆详情:         GET /api/venue/detail
  * 场馆评价更多分页: GET /api/venue/comments
  *
  * @author zhuqi259
  */
+@Before(DeviceInterceptor.class)
 public class VenueAPIController extends BaseAPIController {
     private static final String[] weeks = {"", MON, TUE, WED, THU, FRI, SAT, SUN}; // 1~7
     private static final String defaultCity = "长春市";
     private static final int defaultPageNumber = 1;
     private static final int defaultPageSize = 5;
 
+    @Clear
     @Before(GET.class)
     public void types() {
         List<SportType> sportTypes = SportType.dao.find("SELECT * FROM tbsport_typedic");
@@ -58,12 +69,14 @@ public class VenueAPIController extends BaseAPIController {
      * (全部) => GROUP BY 分组显示
      * (具体类别) => 当前组显示
      * <p>
-     * 运动类别名：
-     * 场馆第一张宣传图片、名称、地址、距离
-     * TODO 按照距离排序
+     * 运动类别名、场馆第一张宣传图片、名称、地址、距离
+     * => 已完成按照距离排序
      */
-    @Before(GET.class)
+    @Before({POST.class, Tx.class})
     public void venues() {
+        String device_uuid = getPara(DEVICE_UUID);
+        String device_longitude = getPara("device_longitude");
+        String device_latitude = getPara("device_latitude");
         String spty_id = getPara(SPTY_ID);
         /**
          * @see org.joda.time.DateTimeConstants.MONDAY
@@ -80,6 +93,30 @@ public class VenueAPIController extends BaseAPIController {
         }
         String venu_city = getPara(VENU_CITY, defaultCity);
         String venu_proper = getPara(VENU_PROPER);
+
+        if (StringUtils.isNotEmpty(device_longitude) && StringUtils.isNotEmpty(device_latitude)) {
+            // 设备距离参数存在 => 更新距离数据
+            try {
+                Double longitude = Double.parseDouble(device_longitude);
+                Double latitude = Double.parseDouble(device_latitude);
+                StringBuilder sb = new StringBuilder();
+                List<Record> venues;
+                /**
+                 *  更新关联的场馆距离(city范围内的均改变，省略重复计算)
+                 */
+                sb.append("SELECT venu_id, venu_longitude, venu_latitude FROM tbvenue WHERE venu_isonline=1 AND venu_city = ? AND ").append(weeks[week]).append("=1 ");
+                if (StringUtils.isNotEmpty(venu_proper)) {
+                    sb.append("AND venu_proper=? ");
+                    venues = Db.find(sb.toString(), venu_city, venu_proper);
+                } else {
+                    venues = Db.find(sb.toString(), venu_city);
+                }
+                calcDistances(device_uuid, longitude, latitude, venues);
+            } catch (NumberFormatException ex) {
+                renderJson(new BaseResponse(Code.ARGUMENT_ERROR, "device longitude and latitude must be String and double_parseable"));
+                return;
+            }
+        }
         StringBuilder sb = new StringBuilder();
         Page<Record> venuePage;
         if (StringUtils.isEmpty(spty_id)) {
@@ -93,21 +130,30 @@ public class VenueAPIController extends BaseAPIController {
              LEFT JOIN  (SELECT * FROM  tbsport_typedic ) dic ON dic.spty_id = tvs.spty_id
              GROUP BY tvs.spty_id, tv.venu_name
              ORDER BY distance
+
+             new =>
+             SELECT dic.*, tvd.*
+             FROM (SELECT tv.*, td.device_uuid, td.dv_distance FROM (SELECT * FROM tbvenue WHERE venu_isonline = 1 AND venu_city = '长春市') tv LEFT JOIN (SELECT venu_id, device_uuid, dv_distance FROM t_distance WHERE device_uuid = 'a-1234567765') td ON tv.venu_id = td.venu_id) tvd
+             LEFT JOIN (SELECT venu_id, spty_id FROM tbvenue_sport WHERE vesp_isonline = 1) tvs ON tvd.venu_id = tvs.venu_id
+             LEFT JOIN (SELECT * FROM tbsport_typedic) dic ON dic.spty_id = tvs.spty_id
+             GROUP BY tvs.spty_id, tvd.venu_name
+             ORDER BY tvs.spty_id, tvd.dv_distance
              */
 
-            sb.append("FROM (SELECT * FROM tbvenue WHERE venu_isonline=1 AND venu_city = ? AND ").append(weeks[week]).append("=1 ");
+            sb.append("FROM (SELECT tv.*, td.device_uuid, td.dv_distance FROM (SELECT * FROM tbvenue WHERE venu_isonline = 1 AND venu_city = ? AND ").append(weeks[week]).append("=1 ");
             if (StringUtils.isNotEmpty(venu_proper)) {
                 sb.append("AND venu_proper=? ");
             }
-            sb.append(") tv ");
-            sb.append("LEFT JOIN (SELECT venu_id , spty_id FROM tbvenue_sport WHERE vesp_isonline = 1) tvs ON tv.venu_id = tvs.venu_id ");
-            sb.append("LEFT JOIN (SELECT * FROM  tbsport_typedic ) dic ON dic.spty_id = tvs.spty_id ");
-            sb.append("GROUP BY tvs.spty_id, tv.venu_name");
+            sb.append(") tv LEFT JOIN (SELECT venu_id, device_uuid, dv_distance FROM t_distance WHERE device_uuid = ?) td ON tv.venu_id = td.venu_id) tvd ");
+            sb.append("LEFT JOIN (SELECT venu_id, spty_id FROM tbvenue_sport WHERE vesp_isonline = 1) tvs ON tvd.venu_id = tvs.venu_id ");
+            sb.append("LEFT JOIN (SELECT * FROM tbsport_typedic) dic ON dic.spty_id = tvs.spty_id ");
+            sb.append("GROUP BY tvs.spty_id, tvd.venu_name ");
+            sb.append("ORDER BY tvs.spty_id, tvd.dv_distance ");
             // System.out.println(sb.toString());
             if (StringUtils.isNotEmpty(venu_proper)) {
-                venuePage = Db.paginate(pageNumber, pageSize, true, "SELECT dic.*, tv.* ", sb.toString(), venu_city, venu_proper);
+                venuePage = Db.paginate(pageNumber, pageSize, true, "SELECT dic.*, tvd.* ", sb.toString(), venu_city, venu_proper, device_uuid);
             } else {
-                venuePage = Db.paginate(pageNumber, pageSize, true, "SELECT dic.*, tv.* ", sb.toString(), venu_city);
+                venuePage = Db.paginate(pageNumber, pageSize, true, "SELECT dic.*, tvd.* ", sb.toString(), venu_city, device_uuid);
             }
         } else {
             // 查看单分组
@@ -119,19 +165,27 @@ public class VenueAPIController extends BaseAPIController {
              LEFT JOIN (SELECT venu_id , spty_id FROM tbvenue_sport WHERE vesp_isonline = 1 AND spty_id='1') tvs ON tv.venu_id = tvs.venu_id
              LEFT JOIN  (SELECT * FROM  tbsport_typedic) dic ON dic.spty_id = tvs.spty_id
              ORDER BY distance
+
+             new =>
+             SELECT dic.*, tvd.*
+             FROM (SELECT tv.*, td.device_uuid, td.dv_distance FROM (SELECT * FROM tbvenue WHERE venu_isonline = 1 AND venu_city = '长春市') tv LEFT JOIN (SELECT venu_id, device_uuid, dv_distance FROM t_distance WHERE device_uuid = 'a-1234567765') td ON tv.venu_id = td.venu_id) tvd
+             LEFT JOIN (SELECT venu_id, spty_id FROM tbvenue_sport WHERE vesp_isonline = 1 AND spty_id='1') tvs ON tvd.venu_id = tvs.venu_id
+             LEFT JOIN (SELECT * FROM tbsport_typedic) dic ON dic.spty_id = tvs.spty_id
+             ORDER BY tvd.dv_distance
              */
-            sb.append("FROM (SELECT * FROM tbvenue WHERE venu_isonline=1 AND venu_city = ? AND ").append(weeks[week]).append("=1 ");
+            sb.append("FROM (SELECT tv.*, td.device_uuid, td.dv_distance FROM (SELECT * FROM tbvenue WHERE venu_isonline = 1 AND venu_city = ? AND ").append(weeks[week]).append("=1 ");
             if (StringUtils.isNotEmpty(venu_proper)) {
                 sb.append("AND venu_proper=? ");
             }
-            sb.append(") tv ");
-            sb.append("LEFT JOIN (SELECT venu_id , spty_id FROM tbvenue_sport WHERE vesp_isonline = 1 AND spty_id=?) tvs ON tv.venu_id = tvs.venu_id ");
-            sb.append("LEFT JOIN (SELECT * FROM  tbsport_typedic ) dic ON dic.spty_id = tvs.spty_id ");
+            sb.append(") tv LEFT JOIN (SELECT venu_id, device_uuid, dv_distance FROM t_distance WHERE device_uuid = ?) td ON tv.venu_id = td.venu_id) tvd ");
+            sb.append("LEFT JOIN (SELECT venu_id, spty_id FROM tbvenue_sport WHERE vesp_isonline = 1 AND spty_id = ?) tvs ON tvd.venu_id = tvs.venu_id ");
+            sb.append("LEFT JOIN (SELECT * FROM tbsport_typedic) dic ON dic.spty_id = tvs.spty_id ");
+            sb.append("ORDER BY tvd.dv_distance ");
             // System.out.println(sb.toString());
             if (StringUtils.isNotEmpty(venu_proper)) {
-                venuePage = Db.paginate(pageNumber, pageSize, true, "SELECT dic.*, tv.* ", sb.toString(), venu_city, venu_proper, spty_id);
+                venuePage = Db.paginate(pageNumber, pageSize, true, "SELECT dic.*, tvd.* ", sb.toString(), venu_city, venu_proper, device_uuid, spty_id);
             } else {
-                venuePage = Db.paginate(pageNumber, pageSize, true, "SELECT dic.*, tv.* ", sb.toString(), venu_city, spty_id);
+                venuePage = Db.paginate(pageNumber, pageSize, true, "SELECT dic.*, tvd.* ", sb.toString(), venu_city, device_uuid, spty_id);
             }
         }
         renderJson(new PageResponse<>(venuePage));
@@ -139,10 +193,13 @@ public class VenueAPIController extends BaseAPIController {
 
     /**
      * 按照场馆名与地址模糊查询
-     * TODO 按照距离排序
+     * => 已经按照距离排序
      */
-    @Before(POST.class)
+    @Before({POST.class, Tx.class})
     public void search() {
+        String device_uuid = getPara(DEVICE_UUID);
+        String device_longitude = getPara("device_longitude");
+        String device_latitude = getPara("device_latitude");
         int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
         int pageSize = getParaToInt("pageSize", defaultPageSize);
         if (pageNumber < 1 || pageSize < 1) {
@@ -156,13 +213,27 @@ public class VenueAPIController extends BaseAPIController {
             return;
         }
         wd = "%" + wd + "%";
-        Page<Venue> venuePage = Venue.dao.paginate(pageNumber, pageSize, "SELECT *", "FROM tbvenue WHERE venu_name LIKE ? or venu_address LIKE ?", wd, wd);
+        if (StringUtils.isNotEmpty(device_longitude) && StringUtils.isNotEmpty(device_latitude)) {
+            // 设备距离参数存在 => 更新距离数据
+            try {
+                Double longitude = Double.parseDouble(device_longitude);
+                Double latitude = Double.parseDouble(device_latitude);
+                List<Record> venues = Db.find("SELECT venu_id, venu_longitude, venu_latitude FROM tbvenue WHERE venu_isonline=1 AND venu_name LIKE ? OR venu_address LIKE ?", wd, wd);
+                calcDistances(device_uuid, longitude, latitude, venues);
+            } catch (NumberFormatException ex) {
+                renderJson(new BaseResponse(Code.ARGUMENT_ERROR, "device longitude and latitude must be String and double_parseable"));
+                return;
+            }
+        }
+        // 按照距离排序
+        Page<Record> venuePage = Db.paginate(pageNumber, pageSize, "SELECT td.dv_distance, tv.venu_id, tv.venu_name, tv.venu_address, tv.img0", "FROM (SELECT * FROM t_distance WHERE device_uuid=? ) td LEFT JOIN tbvenue tv ON td.venu_id = tv.venu_id ORDER BY td.dv_distance DESC", device_uuid);
         renderJson(new PageResponse<>(venuePage));
     }
 
     /**
      * 场馆详情页
      */
+    @Clear
     @Before(GET.class)
     public void detail() {
         String venu_id = getPara(VENU_ID);
@@ -191,6 +262,7 @@ public class VenueAPIController extends BaseAPIController {
     /**
      * 场馆评价更多分页
      */
+    @Clear
     @Before(GET.class)
     public void comments() {
         String venu_id = getPara(VENU_ID);
@@ -220,6 +292,19 @@ public class VenueAPIController extends BaseAPIController {
          */
         Page<Record> venueComments = Db.paginate(pageNumber, pageSize, "SELECT tc.*, tu.user_nickname", "FROM(SELECT * FROM tbvenue_comment WHERE venu_id=?) tc LEFT JOIN tbuser tu ON tc.user_id=tu.user_id ORDER BY tc.createtime DESC", venu_id);
         renderJson(new PageResponse<>(venueComments));
+    }
+
+    private void calcDistances(String device_uuid, double device_longitude, double device_latitude, List<Record> venues) {
+        //删除设备历史距离记录
+        Db.update("DELETE FROM t_distance WHERE device_uuid=?", device_uuid);
+        // 计算新的距离值
+        List<Distance> distances = new ArrayList<>();
+        for (Record venue : venues) {
+            double dv_distance = MapUtils.LantitudeLongitudeDist(device_longitude, device_latitude, venue.getDouble(VENU_LONGITUDE), venue.getDouble(VENU_LATITUDE));
+            Distance distance = new Distance().set(DEVICE_UUID, device_uuid).set(Distance.VENU_ID, venue.getStr(Venue.VENU_ID)).set(Distance.DV_DISTANCE, dv_distance).set(Distance.UPDATETIME, DateUtils.currentTimeStamp());
+            distances.add(distance);
+        }
+        Db.batchSave(distances, 1000); //批量保存
     }
 }
 

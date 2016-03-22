@@ -12,8 +12,8 @@ public class Venue extends Model<Venue> {
     public static String VENU_FACILITY_INFO = "venu_facility_info";
     public static String VENU_STARLEVEL = "venu_starlevel";
     public static String VENU_TEL = "venu_tel";
-    public static String VENU_LATITUDE = "venu_latitude";
     public static String VENU_LONGITUDE = "venu_longitude";
+    public static String VENU_LATITUDE = "venu_latitude";
     public static String VENU_STARTTIME = "venu_starttime";
     public static String VENU_ENDTIME = "venu_endtime";
     public static String MON = "monday";

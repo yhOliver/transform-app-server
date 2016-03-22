@@ -3,6 +3,7 @@ package transform.app.server.api;
 import com.jfinal.aop.Before;
 import com.jfinal.aop.Clear;
 import com.jfinal.plugin.activerecord.Db;
+import com.jfinal.plugin.activerecord.tx.Tx;
 import transform.app.server.common.Require;
 import transform.app.server.common.bean.*;
 import transform.app.server.common.token.TokenManager;
@@ -63,7 +64,7 @@ public class AccountAPIController extends BaseAPIController {
      * 2. 发送短信验证码*
      */
     @Clear
-    @Before(POST.class)
+    @Before({POST.class, Tx.class})
     public void sendCode() {
         String user_mobile = getPara(USER_MOBILE);
         if (StringUtils.isEmpty(user_mobile)) {
@@ -108,7 +109,7 @@ public class AccountAPIController extends BaseAPIController {
      * 用户注册
      */
     @Clear
-    @Before(POST.class)
+    @Before({POST.class, Tx.class})
     public void register() {
         //必填信息
         String user_mobile = getPara(USER_MOBILE);//手机号
@@ -227,6 +228,7 @@ public class AccountAPIController extends BaseAPIController {
     /**
      * 修改用户资料
      */
+    @Before(Tx.class)
     private void updateProfile() {
         boolean flag = false;
         BaseResponse response = new BaseResponse();
@@ -298,7 +300,7 @@ public class AccountAPIController extends BaseAPIController {
     /**
      * 修改密码
      */
-    @Before(POST.class)
+    @Before({POST.class, Tx.class})
     public void password() {
         //根据用户id，查出这个用户的密码，再跟传递的旧密码对比，一样就更新，否则提示旧密码错误
         String oldPwd = getPara("oldPwd");
@@ -322,7 +324,7 @@ public class AccountAPIController extends BaseAPIController {
      * 修改头像接口
      * /api/account/avatar
      */
-    @Before(POST.class)
+    @Before({POST.class, Tx.class})
     public void avatar() {
         String avatar = getPara(USER_PHOTO);
         if (!notNull(Require.me()
