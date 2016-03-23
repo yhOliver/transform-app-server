@@ -5,6 +5,7 @@ import com.jfinal.plugin.activerecord.Model;
 public class Venue extends Model<Venue> {
     public static String VENU_ID = "venu_id";
     public static String VENU_NAME = "venu_name";
+    public static String VENU_PROVINCE = "venu_province";
     public static String VENU_CITY = "venu_city";
     public static String VENU_PROPER = "venu_proper";
     public static String VENU_ADDRESS = "venu_address";

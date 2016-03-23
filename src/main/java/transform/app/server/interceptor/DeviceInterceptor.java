@@ -22,7 +22,7 @@ public class DeviceInterceptor implements Interceptor {
         Controller controller = inv.getController();
         String device_uuid = controller.getPara(DEVICE_UUID);
         if (StringUtils.isEmpty(device_uuid)) {
-            controller.renderJson(new BaseResponse(Code.ARGUMENT_ERROR, "device uuid can not be null"));
+            controller.renderJson(new BaseResponse(Code.FAILURE, "device uuid can not be null"));
             return;
         }
         inv.invoke();

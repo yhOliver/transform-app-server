@@ -6,6 +6,7 @@ import transform.app.server.common.Require;
 import transform.app.server.common.bean.BaseResponse;
 import transform.app.server.common.bean.Code;
 import transform.app.server.common.utils.DateUtils;
+import transform.app.server.interceptor.POST;
 import transform.app.server.interceptor.TokenInterceptor;
 import transform.app.server.model.FeedBack;
 import transform.app.server.model.User;
@@ -15,18 +16,14 @@ import transform.app.server.model.User;
  * <p>
  * 意见反馈: POST /api/feedback
  *
- * @author malongbo
+ * @author zhuqi259
  */
 public class CommonAPIController extends BaseAPIController {
     /**
      * 处理用户意见反馈
      */
-    @Before({TokenInterceptor.class, Tx.class})
+    @Before({TokenInterceptor.class, POST.class, Tx.class})
     public void feedback() {
-        if (!"post".equalsIgnoreCase(getRequest().getMethod())) {
-            renderJson(new BaseResponse(Code.NOT_FOUND));
-            return;
-        }
         //内容
         String suggestion = getPara("suggestion");
         if (!notNull(Require.me()
@@ -41,6 +38,6 @@ public class CommonAPIController extends BaseAPIController {
         }
         //保存反馈
         boolean flag = feedBack.save();
-        renderJson(new BaseResponse(flag ? Code.SUCCESS : Code.FAIL, flag ? "意见反馈成功" : "意见反馈失败"));
+        renderJson(new BaseResponse(flag, flag ? "意见反馈成功" : "意见反馈失败"));
     }
 }

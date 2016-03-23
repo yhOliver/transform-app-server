@@ -12,7 +12,6 @@ import transform.app.server.common.utils.RandomUtils;
 import transform.app.server.common.utils.SMSUtils;
 import transform.app.server.common.utils.StringUtils;
 import transform.app.server.config.AppProperty;
-import transform.app.server.interceptor.GET;
 import transform.app.server.interceptor.POST;
 import transform.app.server.interceptor.TokenInterceptor;
 import transform.app.server.model.RegisterCode;
@@ -29,25 +28,25 @@ import static transform.app.server.model.User.*;
 /**
  * 用户账号相关的接口*
  * <p>
- * 检查账号是否被注册: GET /api/account/checkUser
+ * 检查账号是否被注册: POST /api/account/checkUser
  * 发送注册验证码: POST /api/account/sendCode
  * 注册: POST /api/account/register
  * 登录： POST /api/account/login
- * 查询用户资料: GET /api/account/profile
- * 修改用户资料: POST /api/account/profile
+ * 查询用户资料: POST /api/account/view
+ * 修改用户资料: POST /api/account/update
  * 修改密码: POST /api/account/password
  * 修改头像: POST /api/account/avatar
  *
  * @author malongbo
  */
-@Before(TokenInterceptor.class)
+@Before({POST.class, TokenInterceptor.class})
 public class AccountAPIController extends BaseAPIController {
 
     /**
      * 检查用户账号是否被注册*
      */
     @Clear
-    @Before(GET.class)
+    @Before(POST.class)
     public void checkUser() {
         String user_mobile = getPara(USER_MOBILE);
         if (StringUtils.isEmpty(user_mobile)) {
@@ -56,7 +55,7 @@ public class AccountAPIController extends BaseAPIController {
         }
         //检查手机号码是否被注册
         boolean exists = Db.findFirst("SELECT * FROM tbuser WHERE user_mobile=?", user_mobile) != null;
-        renderJson(new BaseResponse(exists ? Code.SUCCESS : Code.FAIL, exists ? "registered" : "unregistered"));
+        renderJson(new BaseResponse(exists, exists ? "registered" : "unregistered"));
     }
 
     /**
@@ -80,7 +79,7 @@ public class AccountAPIController extends BaseAPIController {
 
         //检查手机号码是否被注册
         if (Db.findFirst("SELECT * FROM tbuser WHERE user_mobile=?", user_mobile) != null) {
-            renderJson(new BaseResponse(Code.ACCOUNT_EXISTS, "mobile already registered"));
+            renderJson(new BaseResponse(Code.FAILURE, "mobile already registered"));
             return;
         }
 
@@ -126,13 +125,13 @@ public class AccountAPIController extends BaseAPIController {
 
         //检查账户是否已被注册
         if (Db.findFirst("SELECT * FROM tbuser WHERE user_mobile=?", user_mobile) != null) {
-            renderJson(new BaseResponse(Code.ACCOUNT_EXISTS, "mobile already registered"));
+            renderJson(new BaseResponse(Code.FAILURE, "mobile already registered"));
             return;
         }
 
         //检查验证码是否有效
         if (Db.findFirst("SELECT * FROM t_register_code WHERE mobile=? AND code = ?", user_mobile, code) == null) {
-            renderJson(new BaseResponse(Code.CODE_ERROR, "code is invalid"));
+            renderJson(new BaseResponse(Code.FAILURE, "code is invalid"));
             return;
         }
 
@@ -173,40 +172,23 @@ public class AccountAPIController extends BaseAPIController {
         }
         String sql = "SELECT * FROM tbuser WHERE user_mobile=? AND pwd=?";
         User nowUser = User.dao.findFirst(sql, user_mobile, password);
-        LoginResponse response = new LoginResponse();
         if (nowUser == null) {
-            response.setCode(Code.FAIL).setMessage("userName or password is error");
-            renderJson(response);
+            renderJson(new BaseResponse(Code.FAILURE, "userName or password is error"));
             return;
         }
+        LoginVO vo = new LoginVO();
         Map<String, Object> userInfo = new HashMap<>(nowUser.getAttrs());
         userInfo.remove(PWD);
-        response.setInfo(userInfo);
-        response.setMessage("login success");
-        response.setToken(TokenManager.getMe().generateToken(nowUser));
-        response.setConstant(Constant.me());
-        renderJson(response);
+        vo.setInfo(userInfo);
+        vo.setToken(TokenManager.getMe().generateToken(nowUser));
+        vo.setConstant(Constant.me());
+        renderJson(new BaseResponse("login success", vo));
     }
-
-    /**
-     * 资料相关的接口
-     */
-    public void profile() {
-        String method = getRequest().getMethod();
-        if ("GET".equalsIgnoreCase(method)) { //查询资料
-            getProfile();
-        } else if ("POST".equalsIgnoreCase(method)) { //修改资料
-            updateProfile();
-        } else {
-            render404();
-        }
-    }
-
 
     /**
      * 查询用户资料
      */
-    private void getProfile() {
+    public void view() {
         String userId = getPara(USER_ID);
         User resultUser;
         if (StringUtils.isNotEmpty(userId)) {
@@ -214,13 +196,13 @@ public class AccountAPIController extends BaseAPIController {
         } else {
             resultUser = getUser();
         }
-        DatumResponse response = new DatumResponse();
+        BaseResponse response = new BaseResponse();
         if (resultUser == null) {
-            response.setCode(Code.FAIL).setMessage("user is not found");
+            response.setSuccess(Code.FAILURE).setMsg("user is not found");
         } else {
             HashMap<String, Object> map = new HashMap<>(resultUser.getAttrs());
             map.remove(PWD);
-            response.setDatum(map);
+            response.setResult(map);
         }
         renderJson(response);
     }
@@ -229,7 +211,7 @@ public class AccountAPIController extends BaseAPIController {
      * 修改用户资料
      */
     @Before(Tx.class)
-    private void updateProfile() {
+    public void update() {
         boolean flag = false;
         BaseResponse response = new BaseResponse();
         User user = getUser();
@@ -291,7 +273,7 @@ public class AccountAPIController extends BaseAPIController {
         user.set(UPDATETIME, DateUtils.currentTimeStamp()); // 更新时间
         if (flag) {
             boolean update = user.update();
-            renderJson(response.setCode(update ? Code.SUCCESS : Code.FAIL).setMessage(update ? "update success" : "update failed"));
+            renderJson(response.setSuccess(update).setMsg(update ? "update success" : "update failed"));
         } else {
             renderArgumentError("must set profile");
         }
@@ -300,7 +282,7 @@ public class AccountAPIController extends BaseAPIController {
     /**
      * 修改密码
      */
-    @Before({POST.class, Tx.class})
+    @Before(Tx.class)
     public void password() {
         //根据用户id，查出这个用户的密码，再跟传递的旧密码对比，一样就更新，否则提示旧密码错误
         String oldPwd = getPara("oldPwd");
@@ -314,9 +296,9 @@ public class AccountAPIController extends BaseAPIController {
         User nowUser = getUser();
         if (oldPwd.equalsIgnoreCase(nowUser.getStr(PWD))) {
             boolean flag = nowUser.set(PWD, newPwd).update();
-            renderJson(new BaseResponse(flag ? Code.SUCCESS : Code.FAIL, flag ? "success" : "failed"));
+            renderJson(new BaseResponse(flag, flag ? "success" : "failed"));
         } else {
-            renderJson(new BaseResponse(Code.FAIL, "oldPwd is invalid"));
+            renderJson(new BaseResponse(Code.FAILURE, "oldPwd is invalid"));
         }
     }
 
@@ -324,15 +306,15 @@ public class AccountAPIController extends BaseAPIController {
      * 修改头像接口
      * /api/account/avatar
      */
-    @Before({POST.class, Tx.class})
+    @Before(Tx.class)
     public void avatar() {
         String avatar = getPara(USER_PHOTO);
         if (!notNull(Require.me()
                 .put(avatar, "avatar url can not be null"))) {
             return;
         }
-        getUser().set(USER_PHOTO, avatar).update();
-        renderSuccess("success");
+        boolean update = getUser().set(USER_PHOTO, avatar).update();
+        renderJson(new BaseResponse().setSuccess(update).setMsg(update ? "update avatar success" : "update avatar failed"));
     }
 }
 

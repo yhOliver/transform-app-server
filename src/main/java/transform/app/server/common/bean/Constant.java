@@ -4,19 +4,18 @@ package transform.app.server.common.bean;
 import transform.app.server.config.AppProperty;
 
 /**
- * @author malongbo
- * @date 2015/1/17
- * @package com.pet.project.bean
+ * @author zhuqi259
+ *         2016-03-23
  */
 public class Constant {
     private static Constant me = new Constant();
-
+    
     private String resourceServer;
 
     /**
      * 获取单例对象
      *
-     * @return
+     * @return Constant
      */
     public static Constant me() {
         return me;

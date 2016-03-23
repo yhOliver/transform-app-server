@@ -23,7 +23,7 @@ public class ErrorInterceptor implements Interceptor {
         } catch (Exception e) {
             e.printStackTrace();
             logger.error(e.getMessage(), e);
-            inv.getController().renderJson(new BaseResponse(Code.ERROR, "server error"));
+            inv.getController().renderJson(new BaseResponse(Code.FAILURE, "server error"));
         }
     }
 }

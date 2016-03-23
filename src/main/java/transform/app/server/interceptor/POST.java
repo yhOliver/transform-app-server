@@ -12,6 +12,6 @@ public class POST implements Interceptor {
         if ("POST".equalsIgnoreCase(controller.getRequest().getMethod()))
             inv.invoke();
         else
-            controller.renderJson(new BaseResponse(Code.NOT_FOUND));
+            controller.renderJson(new BaseResponse(Code.FAILURE, "请求必须为POST"));
     }
 }

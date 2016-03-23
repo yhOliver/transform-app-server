@@ -13,9 +13,8 @@ import java.io.UnsupportedEncodingException;
 /**
  * 处理404接口*
  *
- * @author malongbo
- * @date 15-1-18
- * @package com.pet.project
+ * @author zhuqi259
+ *         2016-03-23
  */
 public class APINotFoundHandler extends Handler {
     @Override
@@ -32,7 +31,7 @@ public class APINotFoundHandler extends Handler {
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
-            RenderFactory.me().getJsonRender(new BaseResponse(Code.NOT_FOUND, "resource is not found")).setContext(request, response).render();
+            RenderFactory.me().getJsonRender(new BaseResponse(Code.FAILURE, "resource is not found")).setContext(request, response).render();
         } else {
             this.next.handle(target, request, response, isHandled);
         }

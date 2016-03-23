@@ -22,12 +22,12 @@ public class TokenInterceptor implements Interceptor {
         Controller controller = inv.getController();
         String token = controller.getPara("token");
         if (StringUtils.isEmpty(token)) {
-            controller.renderJson(new BaseResponse(Code.ARGUMENT_ERROR, "token can not be null"));
+            controller.renderJson(new BaseResponse(Code.FAILURE, "token can not be null"));
             return;
         }
         User user = TokenManager.getMe().validate(token);
         if (user == null) {
-            controller.renderJson(new BaseResponse(Code.TOKEN_INVALID, "token is invalid"));
+            controller.renderJson(new BaseResponse(Code.FAILURE, "token is invalid"));
             return;
         }
         controller.setAttr("user", user);

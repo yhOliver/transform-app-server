@@ -4,7 +4,6 @@ import com.jfinal.core.Controller;
 import transform.app.server.common.Require;
 import transform.app.server.common.bean.BaseResponse;
 import transform.app.server.common.bean.Code;
-import transform.app.server.common.bean.DataResponse;
 import transform.app.server.common.token.TokenManager;
 import transform.app.server.common.utils.StringUtils;
 import transform.app.server.model.User;
@@ -38,61 +37,35 @@ public class BaseAPIController extends Controller {
      * 响应接口不存在*
      */
     public void render404() {
-        renderJson(new BaseResponse(Code.NOT_FOUND));
+        renderJson(new BaseResponse(Code.FAILURE, "接口不存在"));
     }
 
     /**
      * 响应请求参数有误*
      *
-     * @param message 错误信息
+     * @param msg 错误信息
      */
-    public void renderArgumentError(String message) {
-        renderJson(new BaseResponse(Code.ARGUMENT_ERROR, message));
+    public void renderArgumentError(String msg) {
+        renderJson(new BaseResponse(Code.FAILURE, msg));
     }
 
-    /**
-     * 响应数组类型*
-     *
-     * @param list 结果集合
-     */
-    public void renderDataResponse(List<?> list) {
-        DataResponse resp = new DataResponse();
-        resp.setData(list);
-        if (list == null || list.size() == 0) {
-            resp.setMessage("未查询到数据");
-        } else {
-            resp.setMessage("success");
-        }
-        renderJson(resp);
-
-    }
 
     /**
      * 响应操作成功*
      *
-     * @param message 响应信息
+     * @param msg 响应信息
      */
-    public void renderSuccess(String message) {
-        renderJson(new BaseResponse().setMessage(message));
+    public void renderSuccess(String msg) {
+        renderJson(new BaseResponse().setMsg(msg));
     }
 
     /**
      * 响应操作失败*
      *
-     * @param message 响应信息
+     * @param msg 响应信息
      */
-    public void renderFailed(String message) {
-        renderJson(new BaseResponse(Code.FAIL, message));
-    }
-
-    /**
-     * 判断请求类型是否相同*
-     *
-     * @param name String
-     * @return boolean
-     */
-    protected boolean methodType(String name) {
-        return getRequest().getMethod().equalsIgnoreCase(name);
+    public void renderFailed(String msg) {
+        renderJson(new BaseResponse(Code.FAILURE, msg));
     }
 
     /**
@@ -107,20 +80,20 @@ public class BaseAPIController extends Controller {
         }
         for (int i = 0, total = rules.getLength(); i < total; i++) {
             Object key = rules.get(i);
-            String message = rules.getMessage(i);
-            BaseResponse response = new BaseResponse(Code.ARGUMENT_ERROR);
+            String msg = rules.getMessage(i);
+            BaseResponse response = new BaseResponse(Code.FAILURE);
             if (key == null) {
-                renderJson(response.setMessage(message));
+                renderJson(response.setMsg(msg));
                 return false;
             }
             if (key instanceof String && StringUtils.isEmpty((String) key)) {
-                renderJson(response.setMessage(message));
+                renderJson(response.setMsg(msg));
                 return false;
             }
             if (key instanceof Array) {
                 Object[] arr = (Object[]) key;
                 if (arr.length < 1) {
-                    renderJson(response.setMessage(message));
+                    renderJson(response.setMsg(msg));
                     return false;
                 }
             }

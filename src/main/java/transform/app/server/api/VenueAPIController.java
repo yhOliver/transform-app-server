@@ -13,7 +13,6 @@ import transform.app.server.common.utils.DateUtils;
 import transform.app.server.common.utils.MapUtils;
 import transform.app.server.common.utils.StringUtils;
 import transform.app.server.interceptor.DeviceInterceptor;
-import transform.app.server.interceptor.GET;
 import transform.app.server.interceptor.POST;
 import transform.app.server.model.Distance;
 import transform.app.server.model.SportType;
@@ -32,15 +31,15 @@ import static transform.app.server.model.Venue.*;
 /**
  * 场馆相关的接口*
  * <p>
- * 获取运动类别:      GET /api/venue/types
+ * 获取运动类别:      POST /api/venue/types
  * 分页获取场馆列表: POST /api/venue/venues
  * 模糊查询-按照场馆名称或地址查询场馆列表: POST /api/venue/search
- * 场馆详情:         GET /api/venue/detail
- * 场馆评价更多分页: GET /api/venue/comments
+ * 场馆详情:         POST /api/venue/detail
+ * 场馆评价更多分页: POST /api/venue/comments
  *
  * @author zhuqi259
  */
-@Before(DeviceInterceptor.class)
+@Before({POST.class, DeviceInterceptor.class})
 public class VenueAPIController extends BaseAPIController {
     private static final String[] weeks = {"", MON, TUE, WED, THU, FRI, SAT, SUN}; // 1~7
     private static final String defaultCity = "长春市";
@@ -48,10 +47,10 @@ public class VenueAPIController extends BaseAPIController {
     private static final int defaultPageSize = 5;
 
     @Clear
-    @Before(GET.class)
+    @Before(POST.class)
     public void types() {
         List<SportType> sportTypes = SportType.dao.find("SELECT * FROM tbsport_typedic");
-        renderJson(new DataResponse(sportTypes));
+        renderJson(new BaseResponse(sportTypes));
     }
 
     /**
@@ -72,7 +71,7 @@ public class VenueAPIController extends BaseAPIController {
      * 运动类别名、场馆第一张宣传图片、名称、地址、距离
      * => 已完成按照距离排序
      */
-    @Before({POST.class, Tx.class})
+    @Before(Tx.class)
     public void venues() {
         String device_uuid = getPara(DEVICE_UUID);
         String device_longitude = getPara("device_longitude");
@@ -86,9 +85,7 @@ public class VenueAPIController extends BaseAPIController {
         int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
         int pageSize = getParaToInt("pageSize", defaultPageSize);
         if (pageNumber < 1 || pageSize < 1) {
-            BaseResponse response = new BaseResponse();
-            response.setCode(Code.FAIL).setMessage("pageNumber and pageSize must more than 0");
-            renderJson(response);
+            renderFailed("pageNumber and pageSize must more than 0");
             return;
         }
         String venu_city = getPara(VENU_CITY, defaultCity);
@@ -113,7 +110,7 @@ public class VenueAPIController extends BaseAPIController {
                 }
                 calcDistances(device_uuid, longitude, latitude, venues);
             } catch (NumberFormatException ex) {
-                renderJson(new BaseResponse(Code.ARGUMENT_ERROR, "device longitude and latitude must be String and double_parseable"));
+                renderFailed("device longitude and latitude must be String and double_parseable");
                 return;
             }
         }
@@ -188,7 +185,7 @@ public class VenueAPIController extends BaseAPIController {
                 venuePage = Db.paginate(pageNumber, pageSize, true, "SELECT dic.*, tvd.* ", sb.toString(), venu_city, device_uuid, spty_id);
             }
         }
-        renderJson(new PageResponse<>(venuePage));
+        renderJson(new BaseResponse(venuePage));
     }
 
     /**
@@ -203,9 +200,7 @@ public class VenueAPIController extends BaseAPIController {
         int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
         int pageSize = getParaToInt("pageSize", defaultPageSize);
         if (pageNumber < 1 || pageSize < 1) {
-            BaseResponse response = new BaseResponse();
-            response.setCode(Code.FAIL).setMessage("pageNumber and pageSize must more than 0");
-            renderJson(response);
+            renderFailed("pageNumber and pageSize must more than 0");
             return;
         }
         String wd = getPara("wd");
@@ -221,20 +216,20 @@ public class VenueAPIController extends BaseAPIController {
                 List<Record> venues = Db.find("SELECT venu_id, venu_longitude, venu_latitude FROM tbvenue WHERE venu_isonline=1 AND venu_name LIKE ? OR venu_address LIKE ?", wd, wd);
                 calcDistances(device_uuid, longitude, latitude, venues);
             } catch (NumberFormatException ex) {
-                renderJson(new BaseResponse(Code.ARGUMENT_ERROR, "device longitude and latitude must be String and double_parseable"));
+                renderFailed("device longitude and latitude must be String and double_parseable");
                 return;
             }
         }
         // 按照距离排序
         Page<Record> venuePage = Db.paginate(pageNumber, pageSize, "SELECT td.dv_distance, tv.venu_id, tv.venu_name, tv.venu_address, tv.img0", "FROM (SELECT * FROM t_distance WHERE device_uuid=? ) td LEFT JOIN tbvenue tv ON td.venu_id = tv.venu_id ORDER BY td.dv_distance DESC", device_uuid);
-        renderJson(new PageResponse<>(venuePage));
+        renderJson(new BaseResponse(venuePage));
     }
 
     /**
      * 场馆详情页
      */
     @Clear
-    @Before(GET.class)
+    @Before(POST.class)
     public void detail() {
         String venu_id = getPara(VENU_ID);
         //校验参数, 确保不能为空
@@ -242,28 +237,28 @@ public class VenueAPIController extends BaseAPIController {
             return;
         }
         int pageSize = getParaToInt("pageSize", defaultPageSize);
-        VenueDetailResponse response = new VenueDetailResponse();
+
         // 已发布的该类别场馆
         Venue venue = Venue.dao.findFirst("SELECT * FROM tbvenue WHERE venu_id=? AND venu_isonline=1", venu_id);
         if (venue == null) {
-            response.setCode(Code.FAIL).setMessage("venue is not existed or offline");
-            renderJson(response);
+            renderFailed("venue is not existed or offline");
             return;
         }
+        VenueDetailVO vo = new VenueDetailVO();
         List<VenueSport> venueSports = VenueSport.dao.find("SELECT * FROM tbvenue_sport  WHERE venu_id=? AND vesp_isonline=1", venu_id);
         // 默认直接第1页
         Page<Record> venueComments = Db.paginate(1, pageSize, "SELECT tc.*, tu.user_nickname", "FROM(SELECT * FROM tbvenue_comment WHERE venu_id=?) tc LEFT JOIN tbuser tu ON tc.user_id=tu.user_id ORDER BY tc.createtime DESC", venu_id);
-        response.setVenue(venue);
-        response.setVenueSports(venueSports);
-        response.setVenueComments(venueComments);
-        renderJson(response);
+        vo.setVenue(venue);
+        vo.setVenueSports(venueSports);
+        vo.setVenueComments(venueComments);
+        renderJson(new BaseResponse(vo));
     }
 
     /**
      * 场馆评价更多分页
      */
     @Clear
-    @Before(GET.class)
+    @Before(POST.class)
     public void comments() {
         String venu_id = getPara(VENU_ID);
         //校验参数, 确保不能为空
@@ -273,17 +268,13 @@ public class VenueAPIController extends BaseAPIController {
         int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
         int pageSize = getParaToInt("pageSize", defaultPageSize);
         if (pageNumber < 1 || pageSize < 1) {
-            BaseResponse response = new BaseResponse();
-            response.setCode(Code.FAIL).setMessage("pageNumber and pageSize must more than 0");
-            renderJson(response);
+            renderFailed("pageNumber and pageSize must more than 0");
             return;
         }
         // 已发布的该类别场馆
         Venue venue = Venue.dao.findFirst("SELECT * FROM tbvenue WHERE venu_id=? AND venu_isonline=1", venu_id);
         if (venue == null) {
-            BaseResponse response = new BaseResponse();
-            response.setCode(Code.FAIL).setMessage("venue is not existed or offline");
-            renderJson(response);
+            renderFailed("venue is not existed or offline");
             return;
         }
         /**
@@ -291,7 +282,7 @@ public class VenueAPIController extends BaseAPIController {
          FROM(SELECT * FROM tbvenue_comment WHERE venu_id = '124') tc LEFT JOIN tbuser tu ON tc.user_id = tu.user_id   ORDER BY  tc.createtime DESC
          */
         Page<Record> venueComments = Db.paginate(pageNumber, pageSize, "SELECT tc.*, tu.user_nickname", "FROM(SELECT * FROM tbvenue_comment WHERE venu_id=?) tc LEFT JOIN tbuser tu ON tc.user_id=tu.user_id ORDER BY tc.createtime DESC", venu_id);
-        renderJson(new PageResponse<>(venueComments));
+        renderJson(new BaseResponse(venueComments));
     }
 
     private void calcDistances(String device_uuid, double device_longitude, double device_latitude, List<Record> venues) {

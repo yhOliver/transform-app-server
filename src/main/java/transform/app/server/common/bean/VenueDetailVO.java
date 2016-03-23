@@ -5,7 +5,7 @@ import transform.app.server.model.Venue;
 
 import java.util.List;
 
-public class VenueDetailResponse extends BaseResponse {
+public class VenueDetailVO {
     private Venue venue;
     private List<?> venueSports;
     private Page<?> venueComments;
