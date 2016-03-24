@@ -22,3 +22,10 @@
 * 模糊查询场馆列表:      POST /api/venue/search
 * 场馆详情:              POST /api/venue/detail
 * 场馆评价更多分页:      POST /api/venue/comments
+
+
+## 部落相关的接口*
+
+* 创建部落               POST /api/tribe/create
+* 更新部落信息           POST /api/tribe/update
+* 更新部落头像           POST /api/tribe/avatar

@@ -100,7 +100,7 @@ public final class RandomUtils {
 
     /**
      * 生成36位UUID字符
-     * @return 36未随机UUID字符串
+     * @return 36位随机UUID字符串
      */
     public static String randomUUID() {
         return UUID.randomUUID().toString();

@@ -112,7 +112,7 @@ public class AccountAPIController extends BaseAPIController {
     public void register() {
         //必填信息
         String user_mobile = getPara(USER_MOBILE);//手机号
-        int code = getParaToInt(CODE, 0);//手机验证码
+        String code = getPara(CODE);//手机验证码
         String password = getPara(PWD);//密码 (已经加密过了)
 
         //校验必填项参数
@@ -295,7 +295,8 @@ public class AccountAPIController extends BaseAPIController {
         //用户真实的密码
         User nowUser = getUser();
         if (oldPwd.equalsIgnoreCase(nowUser.getStr(PWD))) {
-            boolean flag = nowUser.set(PWD, newPwd).update();
+            boolean flag = nowUser.set(PWD, newPwd)
+                    .set(UPDATETIME, DateUtils.currentTimeStamp()).update();
             renderJson(new BaseResponse(flag, flag ? "success" : "failed"));
         } else {
             renderJson(new BaseResponse(Code.FAILURE, "oldPwd is invalid"));
@@ -313,7 +314,8 @@ public class AccountAPIController extends BaseAPIController {
                 .put(avatar, "avatar url can not be null"))) {
             return;
         }
-        boolean update = getUser().set(USER_PHOTO, avatar).update();
+        boolean update = getUser().set(USER_PHOTO, avatar)
+                .set(UPDATETIME, DateUtils.currentTimeStamp()).update();
         renderJson(new BaseResponse().setSuccess(update).setMsg(update ? "update avatar success" : "update avatar failed"));
     }
 }
