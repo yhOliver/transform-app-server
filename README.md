@@ -29,3 +29,4 @@
 * 创建部落               POST /api/tribe/create
 * 更新部落信息           POST /api/tribe/update
 * 更新部落头像           POST /api/tribe/avatar
+* 查看部落信息           POST /api/tribe/view

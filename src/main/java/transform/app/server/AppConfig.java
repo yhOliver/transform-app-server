@@ -67,7 +67,11 @@ public class AppConfig extends JFinalConfig {
         arp.addMapping("tbvenue_comment", VenueComment.VECO_ID, VenueComment.class); //场馆评价表
         arp.addMapping("t_distance", Distance.class); //设备-场馆距离表
         arp.addMapping("tbtribe", Tribe.TRIBE_ID, Tribe.class); //部落表
-        
+        arp.addMapping("tbtribe_member", TribeMember.ID, TribeMember.class); //部落成员表
+        arp.addMapping("tbcard", Card.CARD_ID, Card.class); //帖子表
+        arp.addMapping("tbcard_media", CardMedia.MEDIA_ID, CardMedia.class); //帖子-多媒体表（帖子中包含的图片、视频）
+        arp.addMapping("tbcard_post", CardPost.POST_ID, CardPost.class); //帖子回复表
+
         //   arp.addMapping("t_feedback", FeedBack.ID, FeedBack.class); //意见反馈表
     }
 

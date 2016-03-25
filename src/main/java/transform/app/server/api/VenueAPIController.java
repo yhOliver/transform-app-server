@@ -56,7 +56,7 @@ public class VenueAPIController extends BaseAPIController {
     /**
      * 分页获取场馆列表
      * 参数包括：
-     * 运动类别 spty_id (没传参或"0"表示全部)
+     * 运动类别 spty_id (没传参表示全部)
      * 时间 :  周一 ~~ 周日 (默认是今天，传给我的是1~7中的某个数)
      * 位置(包括两个参数):
      * city   市（没有默认为 长春市）     精确查找=

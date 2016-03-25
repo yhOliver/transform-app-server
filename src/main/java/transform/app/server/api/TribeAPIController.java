@@ -1,9 +1,11 @@
 package transform.app.server.api;
 
 import com.jfinal.aop.Before;
+import com.jfinal.aop.Clear;
 import com.jfinal.plugin.activerecord.tx.Tx;
 import transform.app.server.common.Require;
 import transform.app.server.common.bean.BaseResponse;
+import transform.app.server.common.bean.Code;
 import transform.app.server.common.utils.DateUtils;
 import transform.app.server.common.utils.RandomUtils;
 import transform.app.server.common.utils.StringUtils;
@@ -23,6 +25,7 @@ import static transform.app.server.model.User.UPDATETIME;
  * 创建部落         POST /api/tribe/create
  * 更新部落信息     POST /api/tribe/update
  * 更新部落头像     POST /api/tribe/avatar
+ * 查看部落信息     POST /api/tribe/view
  *
  * @author zhuqi259
  */
@@ -108,5 +111,24 @@ public class TribeAPIController extends BaseAPIController {
                 .set(UPDATETIME, DateUtils.currentTimeStamp()).update();
         renderJson(new BaseResponse().setSuccess(update)
                 .setMsg(update ? "update tribe img success" : "update tribe img failed"));
+    }
+
+    /**
+     * 部落信息查看 => 是个人就可以
+     */
+    @Clear
+    @Before(POST.class)
+    public void view() {
+        String tribe_id = getPara(TRIBE_ID);
+        if (StringUtils.isEmpty(tribe_id)) {
+            renderJson(new BaseResponse(Code.FAILURE, "tribe id can not be null"));
+            return;
+        }
+        Tribe tribe = Tribe.dao.findById(tribe_id);
+        if (tribe == null) {
+            renderJson(new BaseResponse(Code.FAILURE, "tribe is not found"));// 找不到部落
+        } else {
+            renderJson(new BaseResponse(tribe));
+        }
     }
 }
