@@ -363,7 +363,11 @@ public class VenueAPIController extends BaseAPIController {
         List<Distance> distances = new ArrayList<>();
         for (Record venue : venues) {
             double dv_distance = MapUtils.LantitudeLongitudeDist(device_longitude, device_latitude, venue.getDouble(VENU_LONGITUDE), venue.getDouble(VENU_LATITUDE));
-            Distance distance = new Distance().set(DEVICE_UUID, device_uuid).set(Distance.VENU_ID, venue.getStr(Venue.VENU_ID)).set(Distance.DV_DISTANCE, dv_distance).set(Distance.UPDATETIME, DateUtils.currentTimeStamp());
+            Distance distance = new Distance()
+                    .set(DEVICE_UUID, device_uuid)
+                    .set(Distance.VENU_ID, venue.getStr(Venue.VENU_ID))
+                    .set(Distance.DV_DISTANCE, dv_distance)
+                    .set(Distance.UPDATETIME, DateUtils.currentTimeStamp());
             distances.add(distance);
         }
         Db.batchSave(distances, 1000); //批量保存

@@ -21,5 +21,4 @@ public class TribeMember extends Model<TribeMember> {
      */
     public static String USER_ID = "user_id";
 
-    public static final TribeMember dao = new TribeMember();
 }

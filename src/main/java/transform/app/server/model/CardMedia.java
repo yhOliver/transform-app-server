@@ -25,4 +25,7 @@ public class CardMedia extends Model<CardMedia> {
      * 帖子ID
      */
     public static String CARD_ID = "card_id";
+
+
+    public static final CardMedia dao = new CardMedia();
 }

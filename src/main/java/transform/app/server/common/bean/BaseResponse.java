@@ -33,6 +33,12 @@ public class BaseResponse {
         this.result = result;
     }
 
+    public BaseResponse(boolean success, String msg, Object result) {
+        this.success = success;
+        this.msg = msg;
+        this.result = result;
+    }
+
     public BaseResponse(Object result) {
         this.result = result;
     }
