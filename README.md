@@ -36,4 +36,4 @@
 
 ## 帖子相关的接口*
 
-* 发帖:                  POST /api/card/add
+* 发帖:                  POST /api/post/add

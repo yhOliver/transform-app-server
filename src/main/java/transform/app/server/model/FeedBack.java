@@ -4,7 +4,7 @@ import com.jfinal.plugin.activerecord.Model;
 
 /**
  * 意见反馈实体
- * @author mlongbo
+ * @author zhuqi259
  */
 public class FeedBack extends Model<FeedBack> {
 
@@ -20,12 +20,12 @@ public class FeedBack extends Model<FeedBack> {
     /**
      * 反馈用户的id*
      */
-	public static String USER_ID = "userId";
+	public static String USER_ID = "user_id";
 
     /**
      * 反馈时间*
      */
-	public static String CREATION_DATE = "creationDate";
+	public static String CREATETIME = "createtime";
 
     /**
      * 反馈内容*

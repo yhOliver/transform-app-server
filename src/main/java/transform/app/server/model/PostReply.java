@@ -5,15 +5,15 @@ import com.jfinal.plugin.activerecord.Model;
 /**
  * 帖子回复表
  */
-public class CardPost extends Model<CardPost> {
+public class PostReply extends Model<PostReply> {
     /**
      * 回复ID
      */
-    public static String POST_ID = "post_id";
+    public static String REPLY_ID = "reply_id";
     /**
      * 帖子ID
      */
-    public static String CARD_ID = "card_id";
+    public static String POST_ID = "post_id";
     /**
      * 回复者ID
      */
@@ -21,17 +21,17 @@ public class CardPost extends Model<CardPost> {
     /**
      * 被回复者ID (0 表示回复帖子)
      */
-    public static String REPLY_USER_ID = "reply_user_id";
+    public static String REPLY_TO_USER_ID = "reply_to_user_id";
     /**
      * 回复内容
      */
-    public static String POST_CONTENT = "post_content";
+    public static String REPLY_CONTENT = "reply_content";
     /**
      * 回复时间
      */
-    public static String POST_DATE = "post_date";
+    public static String REPLY_DATE = "reply_date";
     /**
      * 回复(软删除)
      */
-    public static String POST_ISEXIST = "post_isexist";
+    public static String REPLY_ISEXIST = "reply_isexist";
 }

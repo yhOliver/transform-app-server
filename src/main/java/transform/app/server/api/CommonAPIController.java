@@ -4,7 +4,6 @@ import com.jfinal.aop.Before;
 import com.jfinal.plugin.activerecord.tx.Tx;
 import transform.app.server.common.Require;
 import transform.app.server.common.bean.BaseResponse;
-import transform.app.server.common.bean.Code;
 import transform.app.server.common.utils.DateUtils;
 import transform.app.server.interceptor.POST;
 import transform.app.server.interceptor.TokenInterceptor;
@@ -22,7 +21,7 @@ public class CommonAPIController extends BaseAPIController {
     /**
      * 处理用户意见反馈
      */
-    @Before({TokenInterceptor.class, POST.class, Tx.class})
+    @Before({POST.class, TokenInterceptor.class, Tx.class})
     public void feedback() {
         //内容
         String suggestion = getPara("suggestion");
@@ -31,7 +30,7 @@ public class CommonAPIController extends BaseAPIController {
             return;
         }
         FeedBack feedBack = new FeedBack().set(FeedBack.SUGGESTION, suggestion)
-                .set(FeedBack.CREATION_DATE, DateUtils.getNowTimeStamp());
+                .set(FeedBack.CREATETIME, DateUtils.currentTimeStamp());
         User user = getUser();
         if (user != null) {
             feedBack.set(FeedBack.USER_ID, user.userId());

@@ -5,11 +5,11 @@ import com.jfinal.plugin.activerecord.Model;
 /**
  * 帖子表
  */
-public class Card extends Model<Card> {
+public class Post extends Model<Post> {
     /**
      * 帖子ID
      */
-    public static String CARD_ID = "card_id";
+    public static String POST_ID = "post_id";
     /**
      * 部落ID
      */
@@ -26,13 +26,13 @@ public class Card extends Model<Card> {
     /**
      * 帖子内容
      */
-    public static String CARD_CONTENT = "card_content";
+    public static String POST_CONTENT = "post_content";
     /**
      * 创建时间
      */
-    public static String CARD_DATE = "card_date";
+    public static String POST_DATE = "post_date";
     /**
      * 帖子(软删除)
      */
-    public static String CARD_ISEXIST = "card_isexist";
+    public static String POST_ISEXIST = "post_isexist";
 }

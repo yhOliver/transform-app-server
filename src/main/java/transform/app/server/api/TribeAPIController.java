@@ -11,7 +11,7 @@ import transform.app.server.common.utils.RandomUtils;
 import transform.app.server.common.utils.StringUtils;
 import transform.app.server.interceptor.POST;
 import transform.app.server.interceptor.TokenInterceptor;
-import transform.app.server.interceptor.TribeInterceptor;
+import transform.app.server.interceptor.TribeOwnerInterceptor;
 import transform.app.server.model.Tribe;
 import transform.app.server.model.User;
 
@@ -63,7 +63,7 @@ public class TribeAPIController extends BaseAPIController {
         renderJson(new BaseResponse("create tribe success", tribe));
     }
 
-    @Before({TribeInterceptor.class, Tx.class})
+    @Before({TribeOwnerInterceptor.class, Tx.class})
     public void update() {
         boolean flag = false;
         Tribe tribe = getAttr("tribe");
@@ -99,7 +99,7 @@ public class TribeAPIController extends BaseAPIController {
      * 修改部落头像
      * /api/tribe/avatar
      */
-    @Before({TribeInterceptor.class, Tx.class})
+    @Before({TribeOwnerInterceptor.class, Tx.class})
     public void avatar() {
         String avatar = getPara(TRIBE_IMG);
         if (!notNull(Require.me()

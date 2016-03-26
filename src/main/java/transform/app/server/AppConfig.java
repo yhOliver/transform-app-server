@@ -61,6 +61,7 @@ public class AppConfig extends JFinalConfig {
         // TODO 数据库表配置
         arp.addMapping("tbuser", User.USER_ID, User.class);//用户表
         arp.addMapping("t_register_code", RegisterCode.MOBILE, RegisterCode.class); //注册验证码对象
+        arp.addMapping("t_feedback", FeedBack.ID, FeedBack.class); //意见反馈表
         arp.addMapping("tbvenue", Venue.VENU_ID, Venue.class); //场馆表
         arp.addMapping("tbsport_typedic", SportType.SPTY_ID, SportType.class); //运动类别表
         arp.addMapping("tbvenue_sport", VenueSport.VESP_ID, VenueSport.class); //场馆-运动类别关联表
@@ -68,11 +69,9 @@ public class AppConfig extends JFinalConfig {
         arp.addMapping("t_distance", Distance.class); //设备-场馆距离表
         arp.addMapping("tbtribe", Tribe.TRIBE_ID, Tribe.class); //部落表
         arp.addMapping("tbtribe_member", TribeMember.ID, TribeMember.class); //部落成员表
-        arp.addMapping("tbcard", Card.CARD_ID, Card.class); //帖子表
-        arp.addMapping("tbcard_media", CardMedia.MEDIA_ID, CardMedia.class); //帖子-多媒体表（帖子中包含的图片、视频）
-        arp.addMapping("tbcard_post", CardPost.POST_ID, CardPost.class); //帖子回复表
-
-        //   arp.addMapping("t_feedback", FeedBack.ID, FeedBack.class); //意见反馈表
+        arp.addMapping("tbpost", Post.POST_ID, Post.class); //帖子表
+        arp.addMapping("tbpost_media", PostMedia.MEDIA_ID, PostMedia.class); //帖子-多媒体表（帖子中包含的图片、视频）
+        arp.addMapping("tbpost_reply", PostReply.REPLY_ID, PostReply.class); //帖子回复表
     }
 
     /**

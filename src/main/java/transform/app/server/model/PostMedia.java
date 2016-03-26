@@ -5,7 +5,7 @@ import com.jfinal.plugin.activerecord.Model;
 /**
  * 帖子-多媒体表（帖子中包含的图片、视频）
  */
-public class CardMedia extends Model<CardMedia> {
+public class PostMedia extends Model<PostMedia> {
     /**
      * ID
      */
@@ -24,8 +24,8 @@ public class CardMedia extends Model<CardMedia> {
     /**
      * 帖子ID
      */
-    public static String CARD_ID = "card_id";
+    public static String POST_ID = "post_id";
 
 
-    public static final CardMedia dao = new CardMedia();
+    public static final PostMedia dao = new PostMedia();
 }
