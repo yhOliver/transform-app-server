@@ -30,8 +30,5 @@ public class PostReply extends Model<PostReply> {
      * 回复时间
      */
     public static String REPLY_DATE = "reply_date";
-    /**
-     * 回复(软删除)
-     */
-    public static String REPLY_ISEXIST = "reply_isexist";
+
 }

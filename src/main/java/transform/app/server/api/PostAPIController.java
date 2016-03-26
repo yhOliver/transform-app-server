@@ -2,22 +2,30 @@ package transform.app.server.api;
 
 import com.jfinal.aop.Before;
 import com.jfinal.plugin.activerecord.Db;
+import com.jfinal.plugin.activerecord.Page;
+import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.tx.Tx;
 import transform.app.server.common.Require;
+import transform.app.server.common.bean.BaseResponse;
+import transform.app.server.common.bean.PostDetailVO;
 import transform.app.server.common.utils.DateUtils;
 import transform.app.server.common.utils.FileUtils;
 import transform.app.server.common.utils.RandomUtils;
-import transform.app.server.interceptor.TribeMemberInterceptor;
 import transform.app.server.interceptor.POST;
+import transform.app.server.interceptor.PostReplyInterceptor;
 import transform.app.server.interceptor.TokenInterceptor;
+import transform.app.server.interceptor.TribeMemberInterceptor;
 import transform.app.server.model.Post;
 import transform.app.server.model.PostMedia;
+import transform.app.server.model.PostReply;
+import transform.app.server.model.Zan;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static transform.app.server.model.Post.*;
 import static transform.app.server.model.PostMedia.*;
+import static transform.app.server.model.PostReply.*;
 
 
 /**
@@ -25,9 +33,10 @@ import static transform.app.server.model.PostMedia.*;
  * <p>
  * 发帖:                           POST /api/post/add
  * 回复:                           POST /api/post/reply
- * 查看部落内帖子列表（分页）:     POST /api/post/thread
+ * 查看部落内帖子列表（分页）:     POST /api/post/thread *
  * 帖子详情:                       POST /api/post/detail
  * 帖子回复更多分页:               POST /api/post/replies
+ * 点赞:                           POST /api/post/zan
  *
  * @author zhuqi259
  */
@@ -36,6 +45,9 @@ public class PostAPIController extends BaseAPIController {
     private static final int defaultPageNumber = 1;
     private static final int defaultPageSize = 5;
 
+    /**
+     * 发帖
+     */
     @Before(Tx.class)
     public void add() {
         String device_name = getPara(DEVICE_NAME);
@@ -53,12 +65,11 @@ public class PostAPIController extends BaseAPIController {
         String post_id = RandomUtils.randomCustomUUID();
         boolean saved = new Post()
                 .set(Post.POST_ID, post_id)
-                .set(TRIBE_ID, tribe_id)
-                .set(USER_ID, user_id)
+                .set(Post.TRIBE_ID, tribe_id)
+                .set(Post.USER_ID, user_id)
                 .set(DEVICE_NAME, device_name)
                 .set(POST_CONTENT, post_content)
                 .set(POST_DATE, DateUtils.currentTimeStamp())
-                .set(POST_ISEXIST, 1)
                 .save();
         if (saved) {
             // 保存帖子成功后，保存帖子中媒体关联表
@@ -90,5 +101,94 @@ public class PostAPIController extends BaseAPIController {
             renderFailed("post save failed");
         }
     }
+
+    /**
+     * 回复帖子
+     */
+    @Before({PostReplyInterceptor.class, Tx.class})
+    public void reply() {
+        String post_id = getPara(PostReply.POST_ID);
+        String reply_content = getPara(REPLY_CONTENT);
+        //校验必填项参数
+        if (!notNull(Require.me()
+                .put(reply_content, "reply content can not be null"))) {
+            return;
+        }
+        // 被回复者ID (0 表示回复帖子)
+        String reply_to_user_id = getPara(REPLY_TO_USER_ID, "0");
+        if (!"0".equals(reply_to_user_id)) {
+            // 查找该贴子的回复者
+            Record reply_to_user = Db.findFirst("SELECT * FROM tbpost_reply WHERE post_id = ? AND user_id = ?", post_id, reply_to_user_id);
+            if (reply_to_user == null) {
+                renderFailed("user reply to is not existed in this post");
+                return;
+            }
+        }
+        String user_id = getUser().userId();
+        boolean saved = new PostReply()
+                .set(PostReply.REPLY_ID, RandomUtils.randomCustomUUID())
+                .set(PostReply.POST_ID, post_id)
+                .set(PostReply.USER_ID, user_id)
+                .set(REPLY_TO_USER_ID, reply_to_user_id)
+                .set(REPLY_CONTENT, reply_content)
+                .set(REPLY_DATE, DateUtils.currentTimeStamp())
+                .save();
+        renderJson(new BaseResponse(saved, saved ? "reply save success" : "reply save failed"));
+    }
+
+    @Before(PostReplyInterceptor.class)
+    public void replies() {
+        // 查找该贴子的回复列表
+        String post_id = getPara(PostReply.POST_ID);
+        int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
+        int pageSize = getParaToInt("pageSize", defaultPageSize);
+        /**
+         SELECT tpr.*, tu.user_nickname, tu.user_photo
+         FROM ( SELECT * FROM tbpost_reply WHERE post_id = ? ) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id ORDER BY tpr.reply_date
+         */
+        Page<Record> post_replies = Db.paginate(pageNumber, pageSize, "SELECT tpr.*, tu.user_nickname, tu.user_photo",
+                "FROM ( SELECT * FROM tbpost_reply WHERE post_id = ? ) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id ORDER BY tpr.reply_date", post_id);
+        renderJson(new BaseResponse(post_replies));
+    }
+
+    /**
+     * 赞
+     */
+    @Before(PostReplyInterceptor.class)
+    public void zan() {
+        int zan_flag = getParaToInt("zan_flag", 1); // 1点赞、0取消赞
+        String user_id = getUser().userId();
+        String post_id = getPara(Post.POST_ID);
+        // 删除 赞表记录
+        Db.update("DELETE FROM t_zan WHERE post_id=? AND user_id=?", post_id, user_id);
+        if (zan_flag == 1) {
+            new Zan().set(Zan.POST_ID, post_id).set(Zan.USER_ID, user_id).save();
+        }
+        renderSuccess("success");
+    }
+
+    /**
+     * 查看帖子详情
+     */
+    @Before(PostReplyInterceptor.class)
+    public void detail() {
+        String post_id = getPara(Post.POST_ID);
+        int pageSize = getParaToInt("pageSize", defaultPageSize);
+        Post post = getAttr("post");
+        // 图片或视频
+        List<Record> media = Db.find("SELECT media_id, media_type, media_url FROM tbpost_media WHERE post_id = ?", post_id);
+        // 赞
+        List<Record> zans = Db.find("SELECT tu.user_id, tu.user_photo FROM (SELECT user_id FROM t_zan WHERE post_id = ?) tz LEFT JOIN tbuser tu ON tz.user_id = tu.user_id", post_id);
+        // 评论第一页
+        Page<Record> post_replies = Db.paginate(1, pageSize, "SELECT tpr.*, tu.user_nickname, tu.user_photo",
+                "FROM ( SELECT * FROM tbpost_reply WHERE post_id = ? ) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id ORDER BY tpr.reply_date", post_id);
+        PostDetailVO vo = new PostDetailVO();
+        vo.setPost(post);
+        vo.setMedia(media);
+        vo.setZans(zans);
+        vo.setReplies(post_replies);
+        renderJson(new BaseResponse(vo));
+    }
+
 }
 

@@ -31,8 +31,6 @@ public class Post extends Model<Post> {
      * 创建时间
      */
     public static String POST_DATE = "post_date";
-    /**
-     * 帖子(软删除)
-     */
-    public static String POST_ISEXIST = "post_isexist";
+
+    public static Post dao = new Post();
 }
