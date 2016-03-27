@@ -31,7 +31,7 @@ import static transform.app.server.model.PostReply.*;
  * <p>
  * 发帖:                           POST /api/post/add
  * 回复:                           POST /api/post/reply
- * 查看部落内帖子列表（分页）:     POST /api/post/thread *
+ * 查看部落内帖子列表（分页）:     POST /api/post/thread
  * 帖子详情:                       POST /api/post/detail
  * 帖子回复更多分页:               POST /api/post/replies
  * 点赞:                           POST /api/post/zan
