@@ -12,6 +12,7 @@ import transform.app.server.common.utils.StringUtils;
 import transform.app.server.interceptor.POST;
 import transform.app.server.interceptor.TokenInterceptor;
 import transform.app.server.interceptor.TribeOwnerInterceptor;
+import transform.app.server.interceptor.TribeStatusInterceptor;
 import transform.app.server.model.Tribe;
 import transform.app.server.model.User;
 
@@ -117,18 +118,9 @@ public class TribeAPIController extends BaseAPIController {
      * 部落信息查看 => 是个人就可以
      */
     @Clear
-    @Before(POST.class)
+    @Before({POST.class, TribeStatusInterceptor.class})
     public void view() {
-        String tribe_id = getPara(TRIBE_ID);
-        if (StringUtils.isEmpty(tribe_id)) {
-            renderJson(new BaseResponse(Code.FAILURE, "tribe id can not be null"));
-            return;
-        }
-        Tribe tribe = Tribe.dao.findById(tribe_id);
-        if (tribe == null) {
-            renderJson(new BaseResponse(Code.FAILURE, "tribe is not found"));// 找不到部落
-        } else {
-            renderJson(new BaseResponse(tribe));
-        }
+        Tribe tribe = getAttr("tribe");
+        renderJson(new BaseResponse(tribe));
     }
 }

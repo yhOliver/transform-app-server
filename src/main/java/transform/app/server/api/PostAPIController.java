@@ -1,21 +1,20 @@
 package transform.app.server.api;
 
 import com.jfinal.aop.Before;
+import com.jfinal.aop.Clear;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.tx.Tx;
 import transform.app.server.common.Require;
 import transform.app.server.common.bean.BaseResponse;
+import transform.app.server.common.bean.Code;
 import transform.app.server.common.bean.PostDetailVO;
 import transform.app.server.common.utils.DateUtils;
 import transform.app.server.common.utils.FileUtils;
 import transform.app.server.common.utils.RandomUtils;
 import transform.app.server.common.utils.StringUtils;
-import transform.app.server.interceptor.POST;
-import transform.app.server.interceptor.PostReplyInterceptor;
-import transform.app.server.interceptor.TokenInterceptor;
-import transform.app.server.interceptor.TribeMemberInterceptor;
+import transform.app.server.interceptor.*;
 import transform.app.server.model.Post;
 import transform.app.server.model.PostReply;
 import transform.app.server.model.Zan;
@@ -35,10 +34,15 @@ import static transform.app.server.model.PostReply.*;
  * 帖子详情:                       POST /api/post/detail
  * 帖子回复更多分页:               POST /api/post/replies
  * 点赞:                           POST /api/post/zan
+ * <p>
+ * <p>
+ * 部落内帖子列表, 所有会员可见
+ * <p>
+ * 非部落成员可以点赞与查看评论，部落成员可以发帖、评论
  *
  * @author zhuqi259
  */
-@Before({POST.class, TokenInterceptor.class, TribeMemberInterceptor.class})
+@Before({POST.class, TokenInterceptor.class})
 public class PostAPIController extends BaseAPIController {
     private static final int defaultPageNumber = 1;
     private static final int defaultPageSize = 5;
@@ -46,7 +50,7 @@ public class PostAPIController extends BaseAPIController {
     /**
      * 发帖
      */
-    @Before(Tx.class)
+    @Before({TribeMemberInterceptor.class, Tx.class})
     public void add() {
         String device_name = getPara(DEVICE_NAME);
         //校验必填项参数
@@ -72,6 +76,10 @@ public class PostAPIController extends BaseAPIController {
         if (urls != null) {
             String media_urls = StringUtils.join(urls);
             post.set(MEDIA_URLS, media_urls);
+        } else if ("".equals(post_content)) {
+            // 帖子没有内容~~
+            renderFailed("post must have something");
+            return;
         }
         boolean saved = post.save();
         if (saved) {
@@ -90,7 +98,7 @@ public class PostAPIController extends BaseAPIController {
     /**
      * 回复帖子
      */
-    @Before({PostReplyInterceptor.class, Tx.class})
+    @Before({TribeMemberInterceptor.class, PostReplyInterceptor.class, Tx.class})
     public void reply() {
         String post_id = getPara(PostReply.POST_ID);
         String reply_content = getPara(REPLY_CONTENT);
@@ -121,7 +129,7 @@ public class PostAPIController extends BaseAPIController {
         renderJson(new BaseResponse(saved, saved ? "reply save success" : "reply save failed"));
     }
 
-    @Before(PostReplyInterceptor.class)
+    @Before({TribeStatusInterceptor.class, PostReplyInterceptor.class})
     public void replies() {
         // 查找该贴子的回复列表
         String post_id = getPara(PostReply.POST_ID);
@@ -139,7 +147,7 @@ public class PostAPIController extends BaseAPIController {
     /**
      * 赞
      */
-    @Before(PostReplyInterceptor.class)
+    @Before({TribeStatusInterceptor.class, PostReplyInterceptor.class})
     public void zan() {
         int zan_flag = getParaToInt("zan_flag", 1); // 1点赞、0取消赞
         String user_id = getUser().userId();
@@ -155,7 +163,7 @@ public class PostAPIController extends BaseAPIController {
     /**
      * 查看帖子详情
      */
-    @Before(PostReplyInterceptor.class)
+    @Before({TribeStatusInterceptor.class, PostReplyInterceptor.class})
     public void detail() {
         String post_id = getPara(Post.POST_ID);
         int pageSize = getParaToInt("pageSize", defaultPageSize);
@@ -173,8 +181,9 @@ public class PostAPIController extends BaseAPIController {
     }
 
     /**
-     * 部落内帖子列表, 部落内成员可见
+     * 部落内帖子列表, 所有会员可见
      */
+    @Before(TribeStatusInterceptor.class)
     public void thread() {
         // 发帖人，头像，时间，设备，发帖内容，媒体，评论数、赞数
         /**
