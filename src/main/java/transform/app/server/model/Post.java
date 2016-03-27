@@ -28,9 +28,21 @@ public class Post extends Model<Post> {
      */
     public static String POST_CONTENT = "post_content";
     /**
+     * 图片或视频列表
+     */
+    public static String MEDIA_URLS = "media_urls";
+    /**
      * 创建时间
      */
     public static String POST_DATE = "post_date";
+    /**
+     * 评论数
+     */
+    public static String NUM_OF_REPLY = "num_of_reply";
+    /**
+     * 赞数
+     */
+    public static String NUM_OF_ZAN = "num_of_zan";
 
     public static Post dao = new Post();
 }

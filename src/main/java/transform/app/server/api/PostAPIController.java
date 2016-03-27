@@ -11,20 +11,18 @@ import transform.app.server.common.bean.PostDetailVO;
 import transform.app.server.common.utils.DateUtils;
 import transform.app.server.common.utils.FileUtils;
 import transform.app.server.common.utils.RandomUtils;
+import transform.app.server.common.utils.StringUtils;
 import transform.app.server.interceptor.POST;
 import transform.app.server.interceptor.PostReplyInterceptor;
 import transform.app.server.interceptor.TokenInterceptor;
 import transform.app.server.interceptor.TribeMemberInterceptor;
 import transform.app.server.model.Post;
-import transform.app.server.model.PostMedia;
 import transform.app.server.model.PostReply;
 import transform.app.server.model.Zan;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static transform.app.server.model.Post.*;
-import static transform.app.server.model.PostMedia.*;
 import static transform.app.server.model.PostReply.*;
 
 
@@ -59,38 +57,25 @@ public class PostAPIController extends BaseAPIController {
         String post_content = getPara(POST_CONTENT, "");
         // 上传文件，调用文件上传接口 (已经上传完毕)
         String[] urls = getParaValues("urls");
-        String[] types = getParaValues("types");
         String user_id = getUser().userId();
         String tribe_id = getPara(TRIBE_ID);
         String post_id = RandomUtils.randomCustomUUID();
-        boolean saved = new Post()
+        Post post = new Post()
                 .set(Post.POST_ID, post_id)
                 .set(Post.TRIBE_ID, tribe_id)
                 .set(Post.USER_ID, user_id)
                 .set(DEVICE_NAME, device_name)
                 .set(POST_CONTENT, post_content)
                 .set(POST_DATE, DateUtils.currentTimeStamp())
-                .save();
+                .set(NUM_OF_REPLY, 0)
+                .set(NUM_OF_ZAN, 0);
+        if (urls != null) {
+            String media_urls = StringUtils.join(urls);
+            post.set(MEDIA_URLS, media_urls);
+        }
+        boolean saved = post.save();
         if (saved) {
-            // 保存帖子成功后，保存帖子中媒体关联表
-            if (urls != null) {
-                int len = urls.length;
-                if (types == null || types.length != len) {
-                    renderFailed("urls must match with types");
-                } else {
-                    List<PostMedia> postMedias = new ArrayList<>();
-                    for (int i = 0; i < len; i++) {
-                        PostMedia postMedia = new PostMedia()
-                                .set(MEDIA_ID, RandomUtils.randomCustomUUID())
-                                .set(MEDIA_TYPE, types[i])
-                                .set(MEDIA_URL, urls[i])
-                                .set(PostMedia.POST_ID, post_id);
-                        postMedias.add(postMedia);
-                    }
-                    Db.batchSave(postMedias, 100); //批量保存
-                    renderSuccess("post save success");
-                }
-            }
+            renderSuccess("post save success");
         } else {
             // 删除上传文件
             if (urls != null) {
@@ -175,8 +160,6 @@ public class PostAPIController extends BaseAPIController {
         String post_id = getPara(Post.POST_ID);
         int pageSize = getParaToInt("pageSize", defaultPageSize);
         Post post = getAttr("post");
-        // 图片或视频
-        List<Record> media = Db.find("SELECT media_id, media_type, media_url FROM tbpost_media WHERE post_id = ?", post_id);
         // 赞
         List<Record> zans = Db.find("SELECT tu.user_id, tu.user_photo FROM (SELECT user_id FROM t_zan WHERE post_id = ?) tz LEFT JOIN tbuser tu ON tz.user_id = tu.user_id", post_id);
         // 评论第一页
@@ -184,11 +167,26 @@ public class PostAPIController extends BaseAPIController {
                 "FROM ( SELECT * FROM tbpost_reply WHERE post_id = ? ) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id ORDER BY tpr.reply_date", post_id);
         PostDetailVO vo = new PostDetailVO();
         vo.setPost(post);
-        vo.setMedia(media);
         vo.setZans(zans);
         vo.setReplies(post_replies);
         renderJson(new BaseResponse(vo));
     }
 
+    /**
+     * 部落内帖子列表, 部落内成员可见
+     */
+    public void thread() {
+        // 发帖人，头像，时间，设备，发帖内容，媒体，评论数、赞数
+        /**
+         SELECT tp.*, tu.user_nickname, tu.user_photo
+         FROM (SELECT * FROM tbpost WHERE tribe_id = ?) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC
+         */
+        int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
+        int pageSize = getParaToInt("pageSize", defaultPageSize);
+        String tribe_id = getPara(TRIBE_ID);
+        Page<Record> thread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo",
+                "FROM (SELECT * FROM tbpost WHERE tribe_id = ?) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC", tribe_id);
+        renderJson(new BaseResponse(thread));
+    }
 }
 

@@ -70,7 +70,6 @@ public class AppConfig extends JFinalConfig {
         arp.addMapping("tbtribe", Tribe.TRIBE_ID, Tribe.class); //部落表
         arp.addMapping("tbtribe_member", TribeMember.ID, TribeMember.class); //部落成员表
         arp.addMapping("tbpost", Post.POST_ID, Post.class); //帖子表
-        arp.addMapping("tbpost_media", PostMedia.MEDIA_ID, PostMedia.class); //帖子-多媒体表（帖子中包含的图片、视频）
         arp.addMapping("tbpost_reply", PostReply.REPLY_ID, PostReply.class); //帖子回复表
         arp.addMapping("t_zan", Zan.class); //帖子赞表
     }

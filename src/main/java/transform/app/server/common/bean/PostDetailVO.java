@@ -10,7 +10,6 @@ import java.util.List;
  */
 public class PostDetailVO {
     private Post post; //  帖子基本信息
-    private List<?> media; // 帖子的图片或视频
     private List<?> zans; // 赞
     private Page<?> replies; // 回复
 
@@ -20,14 +19,6 @@ public class PostDetailVO {
 
     public void setPost(Post post) {
         this.post = post;
-    }
-
-    public List<?> getMedia() {
-        return media;
-    }
-
-    public void setMedia(List<?> media) {
-        this.media = media;
     }
 
     public List<?> getZans() {
