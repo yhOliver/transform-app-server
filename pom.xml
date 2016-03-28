@@ -17,6 +17,8 @@
         <jdk.version>1.7</jdk.version>
         <jetty.version>6.1.10</jetty.version>
         <jetty.port>80</jetty.port>
+        <tomcat.port>8080</tomcat.port>
+        <app.name>AppServer</app.name>
     </properties>
     <dependencies>
 
@@ -94,7 +96,7 @@
     </dependencies>
 
     <build>
-        <finalName>AppServer</finalName>
+        <finalName>${app.name}</finalName>
         <sourceDirectory>${basedir}/src/main/java</sourceDirectory>
         <outputDirectory>${basedir}/src/main/webapp/WEB-INF/classes</outputDirectory>
         <resources>
@@ -187,6 +189,18 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.tomcat.maven</groupId>
+                <artifactId>tomcat7-maven-plugin</artifactId>
+                <version>2.2</version>
+                <configuration>
+                    <port>${tomcat.port}</port>
+                    <path>/${app.name}</path>
+                    <uriEncoding>UTF-8</uriEncoding>
+                    <finalName>${app.name}</finalName>
+                    <server>tomcat7</server>
+                </configuration>
             </plugin>
         </plugins>
     </build>
