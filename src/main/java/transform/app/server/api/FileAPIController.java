@@ -6,6 +6,7 @@ import transform.app.server.common.bean.BaseResponse;
 import transform.app.server.common.bean.Code;
 import transform.app.server.common.utils.FileUtils;
 import transform.app.server.common.utils.StringUtils;
+import transform.app.server.config.AppProperty;
 import transform.app.server.interceptor.FileTokenInterceptor;
 import transform.app.server.interceptor.POST;
 
@@ -48,8 +49,8 @@ public class FileAPIController extends BaseAPIController {
                         failedFiles.add(uploadFile.getParameterName());//标记为上传失败
                     } else {
                         //返回相对路径,用于响应
-                        // url 不包含 attached
-                        urls.put(uploadFile.getParameterName(), urlPath + newFileName);
+                        // url 中 /attached
+                        urls.put(uploadFile.getParameterName(), "/" + AppProperty.me().uploadRootPath() + urlPath + newFileName);
                     }
                 }
                 if (failedFiles.size() > 0) {

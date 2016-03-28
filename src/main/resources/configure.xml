@@ -2,7 +2,7 @@
 <root>
     <resource>
         <!--文件下载的地址前缀-->
-        <prefix>http://192.168.238.149:8080/attached</prefix>
+        <prefix>http://192.168.238.149:8080</prefix>
         <!--标记是否将上传的文件存储在应用目录，如tomcat. 1表示是，0表示否-->
         <appPath>0</appPath>
         <!--上传文件存储目录, 根据appPath值确定是在应用目录内还是上层目录-->
