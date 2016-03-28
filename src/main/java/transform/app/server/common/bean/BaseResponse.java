@@ -6,7 +6,7 @@ package transform.app.server.common.bean;
  */
 public class BaseResponse {
 
-    private boolean success = Code.SUCCESS;
+    private String success = Code.SUCCESS;
 
     private String msg;
 
@@ -18,12 +18,8 @@ public class BaseResponse {
     public BaseResponse(String msg) {
         this.msg = msg;
     }
-
-    public BaseResponse(boolean success) {
-        this.success = success;
-    }
-
-    public BaseResponse(boolean success, String msg) {
+    
+    public BaseResponse(String success, String msg) {
         this.success = success;
         this.msg = msg;
     }
@@ -33,7 +29,7 @@ public class BaseResponse {
         this.result = result;
     }
 
-    public BaseResponse(boolean success, String msg, Object result) {
+    public BaseResponse(String success, String msg, Object result) {
         this.success = success;
         this.msg = msg;
         this.result = result;
@@ -43,11 +39,11 @@ public class BaseResponse {
         this.result = result;
     }
 
-    public boolean getSuccess() {
+    public String getSuccess() {
         return success;
     }
 
-    public BaseResponse setSuccess(boolean success) {
+    public BaseResponse setSuccess(String success) {
         this.success = success;
         return this;
     }

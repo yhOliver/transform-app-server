@@ -111,11 +111,11 @@ public class AppProperty {
     }
 
     public int appPath() {
-        return getPropertyToInt(AppConstant.RES_APP_PATH, 1);
+        return getPropertyToInt(AppConstant.RES_APP_PATH, 0);
     }
 
     public String uploadRootPath() {
-        return getProperty(AppConstant.RES_UPLOAD_ROOT_PATH, "upload");
+        return getProperty(AppConstant.RES_UPLOAD_ROOT_PATH, "attached");
     }
 
     public String imagePath() {
@@ -123,14 +123,14 @@ public class AppProperty {
     }
 
     public String videoPath() {
-        return getProperty(AppConstant.RES_VIDEO_PATH, "/videoPath");
+        return getProperty(AppConstant.RES_VIDEO_PATH, "/videos");
     }
 
     public String otherPath() {
-        return getProperty(AppConstant.RES_OTHER_PATH, "/otherPath");
+        return getProperty(AppConstant.RES_OTHER_PATH, "/others");
     }
 
     public String defaultUserAvatar() {
-        return getProperty(AppConstant.RES_DEFAULT_USER_AVATAR, "/defaultUserAvatar");
+        return getProperty(AppConstant.RES_DEFAULT_USER_AVATAR, "/images/defaultUserAvatar.jpg");
     }
 }

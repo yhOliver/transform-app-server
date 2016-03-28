@@ -88,7 +88,7 @@ public class TribeAPIController extends BaseAPIController {
             boolean update = tribe.update();
             BaseResponse response = new BaseResponse();
             // 不需要返回更新的部落数据（本地已经知道了）
-            renderJson(response.setSuccess(update)
+            renderJson(response.setSuccess(update ? Code.SUCCESS : Code.FAILURE)
                     .setMsg(update ? "tribe update success" : "tribe update failed"));
         } else {
             renderArgumentError("must set profile of tribe");
@@ -110,7 +110,7 @@ public class TribeAPIController extends BaseAPIController {
         Tribe tribe = getAttr("tribe");
         boolean update = tribe.set(TRIBE_IMG, avatar)
                 .set(UPDATETIME, DateUtils.currentTimeStamp()).update();
-        renderJson(new BaseResponse().setSuccess(update)
+        renderJson(new BaseResponse().setSuccess(update ? Code.SUCCESS : Code.FAILURE)
                 .setMsg(update ? "update tribe img success" : "update tribe img failed"));
     }
 

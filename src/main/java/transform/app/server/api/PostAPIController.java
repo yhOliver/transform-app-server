@@ -1,7 +1,6 @@
 package transform.app.server.api;
 
 import com.jfinal.aop.Before;
-import com.jfinal.aop.Clear;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
@@ -126,7 +125,7 @@ public class PostAPIController extends BaseAPIController {
                 .set(REPLY_CONTENT, reply_content)
                 .set(REPLY_DATE, DateUtils.currentTimeStamp())
                 .save();
-        renderJson(new BaseResponse(saved, saved ? "reply save success" : "reply save failed"));
+        renderJson(new BaseResponse(saved ? Code.SUCCESS : Code.FAILURE, saved ? "reply save success" : "reply save failed"));
     }
 
     @Before({TribeStatusInterceptor.class, PostReplyInterceptor.class})

@@ -34,7 +34,6 @@ public class FileAPIController extends BaseAPIController {
             List<UploadFile> fileList = getFiles();//已接收到的文件
             if (fileList != null && !fileList.isEmpty()) {
                 List<String> failedFiles = new ArrayList<>(); //用于保存未成功上传的文件名
-                System.out.println(fileList.size());
                 for (UploadFile uploadFile : fileList) {
                     File file = uploadFile.getFile();
                     String fileExtension = FileUtils.getExtension(file.getName());
@@ -49,6 +48,7 @@ public class FileAPIController extends BaseAPIController {
                         failedFiles.add(uploadFile.getParameterName());//标记为上传失败
                     } else {
                         //返回相对路径,用于响应
+                        // url 不包含 attached
                         urls.put(uploadFile.getParameterName(), urlPath + newFileName);
                     }
                 }

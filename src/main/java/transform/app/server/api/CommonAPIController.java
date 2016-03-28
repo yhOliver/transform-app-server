@@ -4,6 +4,7 @@ import com.jfinal.aop.Before;
 import com.jfinal.plugin.activerecord.tx.Tx;
 import transform.app.server.common.Require;
 import transform.app.server.common.bean.BaseResponse;
+import transform.app.server.common.bean.Code;
 import transform.app.server.common.utils.DateUtils;
 import transform.app.server.interceptor.POST;
 import transform.app.server.interceptor.TokenInterceptor;
@@ -37,6 +38,6 @@ public class CommonAPIController extends BaseAPIController {
         }
         //保存反馈
         boolean flag = feedBack.save();
-        renderJson(new BaseResponse(flag, flag ? "意见反馈成功" : "意见反馈失败"));
+        renderJson(new BaseResponse(flag ? Code.SUCCESS : Code.FAILURE, flag ? "意见反馈成功" : "意见反馈失败"));
     }
 }

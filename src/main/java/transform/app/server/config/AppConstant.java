@@ -18,7 +18,7 @@ public final class AppConstant {
     public static final String RES_APP_PATH = "resource.appPath";
 
     /**
-     * 上传文件存储目录, 如果appPath值为0,需填写目录的绝对路径，否则填写应用目录的相对路径*
+     * 上传文件存储目录, 根据appPath值确定是在应用目录内还是上层目录
      */
     public static final String RES_UPLOAD_ROOT_PATH = "resource.uploadRootPath";
 

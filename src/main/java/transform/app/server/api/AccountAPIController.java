@@ -55,7 +55,7 @@ public class AccountAPIController extends BaseAPIController {
         }
         //检查手机号码是否被注册
         boolean exists = Db.findFirst("SELECT * FROM tbuser WHERE user_mobile=?", user_mobile) != null;
-        renderJson(new BaseResponse(exists, exists ? "registered" : "unregistered"));
+        renderJson(new BaseResponse(exists ? Code.SUCCESS : Code.FAILURE, exists ? "registered" : "unregistered"));
     }
 
     /**
@@ -273,7 +273,7 @@ public class AccountAPIController extends BaseAPIController {
         user.set(UPDATETIME, DateUtils.currentTimeStamp()); // 更新时间
         if (flag) {
             boolean update = user.update();
-            renderJson(response.setSuccess(update).setMsg(update ? "update success" : "update failed"));
+            renderJson(response.setSuccess(update ? Code.SUCCESS : Code.FAILURE).setMsg(update ? "update success" : "update failed"));
         } else {
             renderArgumentError("must set profile");
         }
@@ -297,7 +297,7 @@ public class AccountAPIController extends BaseAPIController {
         if (oldPwd.equalsIgnoreCase(nowUser.getStr(PWD))) {
             boolean flag = nowUser.set(PWD, newPwd)
                     .set(UPDATETIME, DateUtils.currentTimeStamp()).update();
-            renderJson(new BaseResponse(flag, flag ? "success" : "failed"));
+            renderJson(new BaseResponse(flag ? Code.SUCCESS : Code.FAILURE, flag ? "success" : "failed"));
         } else {
             renderJson(new BaseResponse(Code.FAILURE, "oldPwd is invalid"));
         }
@@ -316,7 +316,7 @@ public class AccountAPIController extends BaseAPIController {
         }
         boolean update = getUser().set(USER_PHOTO, avatar)
                 .set(UPDATETIME, DateUtils.currentTimeStamp()).update();
-        renderJson(new BaseResponse().setSuccess(update).setMsg(update ? "update avatar success" : "update avatar failed"));
+        renderJson(new BaseResponse().setSuccess(update ? Code.SUCCESS : Code.FAILURE).setMsg(update ? "update avatar success" : "update avatar failed"));
     }
 }
 

@@ -9,7 +9,6 @@ import transform.app.server.common.utils.StringUtils;
 import transform.app.server.model.User;
 
 import java.lang.reflect.Array;
-import java.util.List;
 
 /**
  * 基本的api

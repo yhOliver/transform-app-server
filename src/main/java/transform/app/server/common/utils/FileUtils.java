@@ -77,7 +77,7 @@ public final class FileUtils {
             }
             return false;
         } catch (Exception e) {
-            System.out.println("复制单个文件操作出错 ");
+            // System.out.println("复制单个文件操作出错 ");
             e.printStackTrace();
             return false;
         }
@@ -261,13 +261,18 @@ public final class FileUtils {
      * @return String
      */
     private static String getSaveFilePath() {
-        String saveFilePath = "";
+        String saveFilePath;
         //表示存放在tomcat应用目录中
         if (AppProperty.me().appPath() == 1) {
             saveFilePath = Context.me().getRequest().getSession().getServletContext().getRealPath("/");
+        } else {
+            // 上层目录
+            saveFilePath = new File(Context.me().getRequest().getSession().getServletContext().getRealPath("/")).getParent();// 当前WEB环境的上层目录
+        }
+        if (!saveFilePath.endsWith("/") && !saveFilePath.endsWith("\\")) {
+            saveFilePath += "/";
         }
         saveFilePath += AppProperty.me().uploadRootPath();
-        // System.out.println("saveFilePath => " + saveFilePath);
         return saveFilePath;
     }
 
@@ -291,7 +296,7 @@ public final class FileUtils {
             urlPath = AppProperty.me().otherPath() + timeFilePath;
             saveFilePath += urlPath;
         }
-        // System.out.println("saveFilePath xxx => " + saveFilePath);
+        // System.out.println("saveFilePath => " + saveFilePath);
         File saveFileDir = new File(saveFilePath);
         if (!saveFileDir.exists()) {
             saveFileDir.mkdirs();

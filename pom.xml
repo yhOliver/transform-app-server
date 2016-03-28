@@ -94,7 +94,7 @@
     </dependencies>
 
     <build>
-        <finalName>ROOT</finalName>
+        <finalName>AppServer</finalName>
         <sourceDirectory>${basedir}/src/main/java</sourceDirectory>
         <outputDirectory>${basedir}/src/main/webapp/WEB-INF/classes</outputDirectory>
         <resources>
