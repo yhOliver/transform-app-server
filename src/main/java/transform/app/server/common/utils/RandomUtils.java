@@ -20,6 +20,7 @@ public final class RandomUtils {
 
     /**
      * 根据指定长度随机生成小写字母
+     *
      * @param length 长度
      * @return 指定长度的随机小写字母字符串
      */
@@ -32,17 +33,17 @@ public final class RandomUtils {
         StringBuilder sb = new StringBuilder();
         Random randData = new Random();
 
-        int data = 0;
-        for(int i = 0; i < length; i++)
-        {
-            data=randData.nextInt(26)+97;//保证只会产生97~122之间的整数
-            sb.append((char)data);
+        int data;
+        for (int i = 0; i < length; i++) {
+            data = randData.nextInt(26) + 97;//保证只会产生97~122之间的整数
+            sb.append((char) data);
         }
         return sb.toString();
     }
 
     /**
      * 根据指定长度随机生成大写字母
+     *
      * @param length 长度
      * @return 指定长度的随机大写字母字符串
      */
@@ -55,17 +56,17 @@ public final class RandomUtils {
         StringBuilder sb = new StringBuilder();
         Random randData = new Random();
 
-        int data = 0;
-        for(int i = 0; i < length; i++)
-        {
-            data=randData.nextInt(26)+65;//保证只会产生97~122之间的整数
-            sb.append((char)data);
+        int data;
+        for (int i = 0; i < length; i++) {
+            data = randData.nextInt(26) + 65;//保证只会产生97~122之间的整数
+            sb.append((char) data);
         }
         return sb.toString();
     }
 
     /**
      * 根据指定长度随机生成数字
+     *
      * @param length 长度
      * @return 指定长度的随机数字
      */
@@ -78,10 +79,9 @@ public final class RandomUtils {
         StringBuilder sb = new StringBuilder();
         Random randData = new Random();
 
-        int data = 0;
-        for(int i = 0; i < length; i++)
-        {
-            data=randData.nextInt(10);//仅仅会生成0~9
+        int data;
+        for (int i = 0; i < length; i++) {
+            data = randData.nextInt(10);//仅仅会生成0~9
             sb.append(data);
         }
         return sb.toString();
@@ -89,17 +89,19 @@ public final class RandomUtils {
 
     /**
      * 生成32位UUID字符，去除字符'-'
+     *
      * @return 32位随机UUID字符串
      */
     public static String randomCustomUUID() {
         UUID uuid = UUID.randomUUID();
         String uuidStr = uuid.toString();
 
-        return uuidStr.replaceAll("-","");
+        return uuidStr.replaceAll("-", "");
     }
 
     /**
      * 生成36位UUID字符
+     *
      * @return 36位随机UUID字符串
      */
     public static String randomUUID() {
@@ -131,4 +133,28 @@ public final class RandomUtils {
         return new String(randBuffer);
     }
 
+    public static UUID fromCustomString(String customUuidString) {
+        String[] components = {
+                customUuidString.substring(0, 8), // 8
+                customUuidString.substring(8, 12), // 4
+                customUuidString.substring(12, 16), // 4
+                customUuidString.substring(16, 20), // 4
+                customUuidString.substring(20, 32) // 12
+        };
+        if (components.length != 5) {
+            throw new IllegalArgumentException("Invalid UUID string: " + customUuidString);
+        }
+        for (int i = 0; i < 5; i++) {
+            components[i] = "0x" + components[i];
+        }
+        long mostSigBits = Long.decode(components[0]);
+        mostSigBits <<= 16;
+        mostSigBits |= Long.decode(components[1]);
+        mostSigBits <<= 16;
+        mostSigBits |= Long.decode(components[2]);
+        long leastSigBits = Long.decode(components[3]);
+        leastSigBits <<= 48;
+        leastSigBits |= Long.decode(components[4]);
+        return new UUID(mostSigBits, leastSigBits);
+    }
 }

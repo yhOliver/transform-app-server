@@ -6,11 +6,14 @@
 * 发送注册验证码:        POST /api/account/sendCode
 * 注册:                  POST /api/account/register
 * 登录：                 POST /api/account/login
-* 查询用户资料:          POST /api/account/view
+* 查询用户资料:          POST /api/account/view           (也可查询他人资料)
 * 修改用户资料:          POST /api/account/update
 * 修改密码:              POST /api/account/password
 * 修改头像:              POST /api/account/avatar
- 
+* 获取头像:              POST /api/account/getAvatar      (也可获取他人头像)
+* 获取用户粉丝列表:      POST /api/account/fans
+* 获取用户关注列表:      POST /api/account/concerns
+
 ## 公共模块接口*
  
 * 意见反馈:              POST /api/feedback
@@ -42,3 +45,5 @@
 * 帖子详情:              POST /api/post/detail
 * 帖子回复更多分页:      POST /api/post/replies
 * 点赞:                  POST /api/post/zan
+* 最新帖子:              POST /api/post/latest
+* 某个用户的帖子列表:    POST /api/post/postsOfSomeOne (就是用户动态)

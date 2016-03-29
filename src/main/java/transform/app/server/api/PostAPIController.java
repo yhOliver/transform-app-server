@@ -1,6 +1,7 @@
 package transform.app.server.api;
 
 import com.jfinal.aop.Before;
+import com.jfinal.aop.Clear;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
@@ -33,11 +34,14 @@ import static transform.app.server.model.PostReply.*;
  * 帖子详情:                       POST /api/post/detail
  * 帖子回复更多分页:               POST /api/post/replies
  * 点赞:                           POST /api/post/zan
- * <p>
+ * 最新帖子:                       POST /api/post/latest
+ * 某个用户的帖子列表:             POST /api/post/postsOfSomeOne (就是用户动态)
  * <p>
  * 部落内帖子列表, 所有会员可见
  * <p>
  * 非部落成员可以点赞与查看评论，部落成员可以发帖、评论
+ * <p>
+ * 最新帖子暂时仅按照时间排序
  *
  * @author zhuqi259
  */
@@ -195,6 +199,38 @@ public class PostAPIController extends BaseAPIController {
         Page<Record> thread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo",
                 "FROM (SELECT * FROM tbpost WHERE tribe_id = ?) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC", tribe_id);
         renderJson(new BaseResponse(thread));
+    }
+
+    /**
+     * 最新帖子, 是个人就可以看到，都不需要登陆
+     */
+    @Clear
+    @Before(POST.class)
+    public void latest() {
+        int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
+        int pageSize = getParaToInt("pageSize", defaultPageSize);
+        Page<Record> latestThread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo",
+                "FROM tbpost tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC");
+        renderJson(new BaseResponse(latestThread));
+    }
+
+
+    /**
+     * 某个用户的帖子列表，是个人就可以看到，都不需要登陆，(就是用户动态)
+     */
+    @Clear
+    @Before(POST.class)
+    public void postsOfSomeOne() {
+        int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
+        int pageSize = getParaToInt("pageSize", defaultPageSize);
+        String user_id = getPara(Post.USER_ID);
+        if (StringUtils.isEmpty(user_id)) {
+            renderFailed("user id can not be null");
+            return;
+        }
+        Page<Record> latestThread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo",
+                "FROM (SELECT * FROM tbpost WHERE user_id = ?) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC", user_id);
+        renderJson(new BaseResponse(latestThread));
     }
 }
 

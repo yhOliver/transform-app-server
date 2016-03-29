@@ -3,6 +3,7 @@ package transform.app.server.api;
 import com.jfinal.aop.Before;
 import com.jfinal.aop.Clear;
 import com.jfinal.plugin.activerecord.Db;
+import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.tx.Tx;
 import transform.app.server.common.Require;
 import transform.app.server.common.bean.*;
@@ -14,11 +15,13 @@ import transform.app.server.common.utils.StringUtils;
 import transform.app.server.config.AppProperty;
 import transform.app.server.interceptor.POST;
 import transform.app.server.interceptor.TokenInterceptor;
+import transform.app.server.interceptor.UserStatusInterceptor;
 import transform.app.server.model.RegisterCode;
 import transform.app.server.model.User;
 
 import java.sql.Timestamp;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static transform.app.server.model.RegisterCode.CODE;
@@ -36,8 +39,10 @@ import static transform.app.server.model.User.*;
  * 修改用户资料: POST /api/account/update
  * 修改密码: POST /api/account/password
  * 修改头像: POST /api/account/avatar
- *
- * @author malongbo
+ * 获取头像: POST /api/account/getAvatar
+ * 获取用户粉丝列表: POST /api/account/fans
+ * 获取用户关注列表: POST /api/account/concerns
+ * @author zhuqi259
  */
 @Before({POST.class, TokenInterceptor.class})
 public class AccountAPIController extends BaseAPIController {
@@ -154,7 +159,6 @@ public class AccountAPIController extends BaseAPIController {
         renderJson(new BaseResponse("success"));
     }
 
-
     /**
      * 登录接口
      */
@@ -186,24 +190,16 @@ public class AccountAPIController extends BaseAPIController {
     }
 
     /**
-     * 查询用户资料
+     * 查询用户资料(也可查询他人资料)， 不需要登陆
      */
+    @Clear
+    @Before({POST.class, UserStatusInterceptor.class})
     public void view() {
-        String userId = getPara(USER_ID);
-        User resultUser;
-        if (StringUtils.isNotEmpty(userId)) {
-            resultUser = User.dao.findById(userId);
-        } else {
-            resultUser = getUser();
-        }
+        User user = getAttr("user");
         BaseResponse response = new BaseResponse();
-        if (resultUser == null) {
-            response.setSuccess(Code.FAILURE).setMsg("user is not found");
-        } else {
-            HashMap<String, Object> map = new HashMap<>(resultUser.getAttrs());
-            map.remove(PWD);
-            response.setResult(map);
-        }
+        HashMap<String, Object> map = new HashMap<>(user.getAttrs());
+        map.remove(PWD);
+        response.setResult(map);
         renderJson(response);
     }
 
@@ -317,6 +313,55 @@ public class AccountAPIController extends BaseAPIController {
         boolean update = getUser().set(USER_PHOTO, avatar)
                 .set(UPDATETIME, DateUtils.currentTimeStamp()).update();
         renderJson(new BaseResponse().setSuccess(update ? Code.SUCCESS : Code.FAILURE).setMsg(update ? "update avatar success" : "update avatar failed"));
+    }
+
+    /**
+     * 获取头像接口(也可获取他人头像)
+     * /api/account/getAvatar
+     */
+    @Clear
+    @Before({POST.class, UserStatusInterceptor.class})
+    public void getAvatar() {
+        User user = getAttr("user");
+        String user_photo = user.getStr(USER_PHOTO);
+        if (StringUtils.isNotEmpty(user_photo)) {
+            renderJson(new BaseResponse(user_photo));
+        } else {
+            renderFailed("user photo is not found");
+        }
+    }
+
+
+    /**
+     * 获取用户粉丝列表
+     */
+    @Clear
+    @Before({POST.class, UserStatusInterceptor.class})
+    public void fans() {
+        /**
+         concern_id 关注 concerned_id
+         查找concerned_id的粉丝列表，被哪些用户所关注
+         SELECT tu.user_id, tu.user_nickname, tu.user_photo FROM (SELECT * FROM tbuser_concern WHERE concerned_id = ?) tc LEFT JOIN tbuser tu ON tc.concern_id = tu.user_id
+         */
+        String user_id = getPara(USER_ID);
+        List<Record> fs = Db.find("SELECT tu.user_id, tu.user_nickname, tu.user_photo FROM (SELECT * FROM tbuser_concern WHERE concerned_id = ?) tc LEFT JOIN tbuser tu ON tc.concern_id = tu.user_id", user_id);
+        renderJson(new BaseResponse(fs));
+    }
+
+    /**
+     * 获取用户关注列表
+     */
+    @Clear
+    @Before({POST.class, UserStatusInterceptor.class})
+    public void concerns() {
+        /**
+         concern_id 关注 concerned_id
+         查找concern_id的关注列表，关注了哪些用户
+         SELECT tu.user_id, tu.user_nickname, tu.user_photo FROM (SELECT * FROM tbuser_concern WHERE concern_id = ?) tc LEFT JOIN tbuser tu ON tc.concerned_id = tu.user_id
+         */
+        String user_id = getPara(USER_ID);
+        List<Record> cons = Db.find("SELECT tu.user_id, tu.user_nickname, tu.user_photo FROM (SELECT * FROM tbuser_concern WHERE concern_id = ?) tc LEFT JOIN tbuser tu ON tc.concerned_id = tu.user_id", user_id);
+        renderJson(new BaseResponse(cons));
     }
 }
 
