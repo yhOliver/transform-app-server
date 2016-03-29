@@ -200,6 +200,9 @@
                     <uriEncoding>UTF-8</uriEncoding>
                     <finalName>${app.name}</finalName>
                     <server>tomcat7</server>
+                    <url>http://192.168.238.149:8080/manager/text</url>
+                    <username>admin</username>
+                    <password>admin</password>
                 </configuration>
             </plugin>
         </plugins>
