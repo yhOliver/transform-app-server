@@ -2,6 +2,7 @@ package transform.app.server.api;
 
 import com.jfinal.aop.Before;
 import com.jfinal.aop.Clear;
+import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.tx.Tx;
 import transform.app.server.common.Require;
 import transform.app.server.common.bean.BaseResponse;
@@ -9,11 +10,9 @@ import transform.app.server.common.bean.Code;
 import transform.app.server.common.utils.DateUtils;
 import transform.app.server.common.utils.RandomUtils;
 import transform.app.server.common.utils.StringUtils;
-import transform.app.server.interceptor.POST;
-import transform.app.server.interceptor.TokenInterceptor;
-import transform.app.server.interceptor.TribeOwnerInterceptor;
-import transform.app.server.interceptor.TribeStatusInterceptor;
+import transform.app.server.interceptor.*;
 import transform.app.server.model.Tribe;
+import transform.app.server.model.TribeMember;
 import transform.app.server.model.User;
 
 import static transform.app.server.model.Tribe.*;
@@ -27,6 +26,8 @@ import static transform.app.server.model.User.UPDATETIME;
  * 更新部落信息     POST /api/tribe/update
  * 更新部落头像     POST /api/tribe/avatar
  * 查看部落信息     POST /api/tribe/view
+ * 加入部落         POST /api/tribe/join
+ * 退出部落         POST /api/tribe/leave
  *
  * @author zhuqi259
  */
@@ -122,5 +123,63 @@ public class TribeAPIController extends BaseAPIController {
     public void view() {
         Tribe tribe = getAttr("tribe");
         renderJson(new BaseResponse(tribe));
+    }
+
+    /**
+     * 加入部落
+     */
+    @Before({TribeStatusInterceptor.class, Tx.class})
+    public void join() {
+        User user = getUser();
+        String user_id = user.userId();
+        Tribe tribe = getAttr("tribe");
+        String tribe_id = getPara(TRIBE_ID);
+        if (user_id.equals(tribe.getStr(USER_ID))) {
+            // 创建者
+            renderFailed("you are the creator, you need not join");
+            return;
+        }
+        if (Db.findFirst("SELECT * FROM tbtribe_member WHERE tribe_id=? AND user_id=?", tribe_id, user_id) != null) {
+            renderFailed("you have already joined");
+            return;
+        }
+        // 新增部落成员表记录
+        boolean saved = new TribeMember()
+                .set(TribeMember.ID, RandomUtils.randomCustomUUID())
+                .set(TribeMember.TRIBE_ID, tribe_id)
+                .set(TribeMember.USER_ID, user_id)
+                .save();
+        if (saved) {
+            // 部落人数+1
+            Db.update("UPDATE tbtribe SET num_of_members = num_of_members+1 WHERE tribe_id = ?", tribe_id);
+            renderSuccess("join success");
+        } else {
+            renderFailed("join failed");
+        }
+    }
+
+    /**
+     * 退出部落(登陆状态，是部落成员，且不是创建者)
+     */
+    @Before({TribeMemberInterceptor.class, Tx.class})
+    public void leave() {
+        User user = getUser();
+        String user_id = user.userId();
+        Tribe tribe = getAttr("tribe");
+        String tribe_id = getPara(TRIBE_ID);
+        if (user_id.equals(tribe.getStr(USER_ID))) {
+            // 创建者
+            renderFailed("you are the creator, you can not leave");
+            return;
+        }
+        // 删除部落成员表记录
+        int deleted = Db.update("DELETE FROM tbtribe_member WHERE tribe_id=? AND user_id=?", tribe_id, user_id);
+        if (deleted > 0) {
+            // 部落人数-1
+            Db.update("UPDATE tbtribe SET num_of_members = num_of_members-1 WHERE tribe_id = ?", tribe_id);
+            renderSuccess("leave the tribe success");
+        } else {
+            renderFailed("leave the tribe failed");
+        }
     }
 }

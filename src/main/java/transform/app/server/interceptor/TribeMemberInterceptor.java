@@ -34,7 +34,7 @@ public class TribeMemberInterceptor implements Interceptor {
             controller.renderJson(new BaseResponse(Code.FAILURE, "tribe is not found"));// 找不到部落
         } else {
             String user_id = user.get(User.USER_ID);
-            if (!user_id.equals(tribe.get(Tribe.USER_ID)) && Db.findFirst("select * from tbtribe_member where tribe_id=? and user_id=?", tribe_id, user_id) == null) {
+            if (!user_id.equals(tribe.get(Tribe.USER_ID)) && Db.findFirst("SELECT * FROM tbtribe_member WHERE tribe_id=? AND user_id=?", tribe_id, user_id) == null) {
                 controller.renderJson(new BaseResponse(Code.FAILURE, "you are not in this tribe"));// 你不在部落中~~
             } else {
                 // 继续下去

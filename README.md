@@ -13,6 +13,7 @@
 * 获取头像:              POST /api/account/getAvatar      (也可获取他人头像)
 * 获取用户粉丝列表:      POST /api/account/fans
 * 获取用户关注列表:      POST /api/account/concerns
+* 关注用户/取消关注:     POST /api/account/concern
 
 ## 公共模块接口*
  
@@ -36,6 +37,8 @@
 * 更新部落信息:          POST /api/tribe/update
 * 更新部落头像:          POST /api/tribe/avatar
 * 查看部落信息:          POST /api/tribe/view
+* 加入部落:              POST /api/tribe/join
+* 退出部落:              POST /api/tribe/leave
 
 ## 帖子相关的接口*
 
@@ -44,6 +47,17 @@
 * 查看部落内帖子列表(分页): POST /api/post/thread
 * 帖子详情:              POST /api/post/detail
 * 帖子回复更多分页:      POST /api/post/replies
-* 点赞:                  POST /api/post/zan
+* 点赞/取消赞:           POST /api/post/zan
 * 最新帖子:              POST /api/post/latest
 * 某个用户的帖子列表:    POST /api/post/postsOfSomeOne (就是用户动态)
+
+
+---
+#### 替换触发器
+* 发帖成功，用户状态数+1      V
+* 评论成功，帖子评论数+1      V
+* 点赞/取消赞，更新帖子赞数   V
+* 关注用户/取消关注           V
+* 加入(退出)部落              V
+* 删帖
+* 删评论

@@ -18,6 +18,7 @@ import transform.app.server.interceptor.TokenInterceptor;
 import transform.app.server.interceptor.UserStatusInterceptor;
 import transform.app.server.model.RegisterCode;
 import transform.app.server.model.User;
+import transform.app.server.model.UserConcern;
 
 import java.sql.Timestamp;
 import java.util.HashMap;
@@ -26,6 +27,8 @@ import java.util.Map;
 
 import static transform.app.server.model.RegisterCode.CODE;
 import static transform.app.server.model.User.*;
+import static transform.app.server.model.UserConcern.CONCERNED_ID;
+import static transform.app.server.model.UserConcern.CONCERN_ID;
 
 
 /**
@@ -42,6 +45,8 @@ import static transform.app.server.model.User.*;
  * 获取头像: POST /api/account/getAvatar
  * 获取用户粉丝列表: POST /api/account/fans
  * 获取用户关注列表: POST /api/account/concerns
+ * 关注用户（取消关注）: POST /api/account/concern
+ *
  * @author zhuqi259
  */
 @Before({POST.class, TokenInterceptor.class})
@@ -150,6 +155,9 @@ public class AccountAPIController extends BaseAPIController {
                 .set(CREATETIME, DateUtils.currentTimeStamp())
                 .set(UPDATETIME, DateUtils.currentTimeStamp())
                 .set(USER_PHOTO, avatar) // 默认头像
+                .set(NUM_OF_CARE, 0)
+                .set(NUM_OF_FANS, 0)
+                .set(NUM_OF_STATUS, 0)
                 .save();
 
         //删除验证码记录
@@ -362,6 +370,70 @@ public class AccountAPIController extends BaseAPIController {
         String user_id = getPara(USER_ID);
         List<Record> cons = Db.find("SELECT tu.user_id, tu.user_nickname, tu.user_photo FROM (SELECT * FROM tbuser_concern WHERE concern_id = ?) tc LEFT JOIN tbuser tu ON tc.concerned_id = tu.user_id", user_id);
         renderJson(new BaseResponse(cons));
+    }
+
+    /**
+     * 关注用户（取消关注）: (需要登录，被关注者必须存在)
+     * /api/account/concern
+     */
+    @Before(Tx.class)
+    public void concern() {
+        User user = getAttr("user");
+        String concerned_id = getPara(CONCERNED_ID); // 被关注者ID
+        if (StringUtils.isEmpty(concerned_id)) {
+            renderFailed("concerned id can not be null");
+            return;
+        }
+        User concerned_user = User.dao.findById(concerned_id);
+        if (concerned_user == null) {
+            renderFailed("concerned user is not found");
+            return;
+        }
+        String concern_id = user.userId();
+        if (concern_id.equals(concerned_id)) {
+            renderFailed("you can not concern yourself");
+            return;
+        }
+        int concern_flag = getParaToInt("concern_flag", 1); // 1关注、 0取消关注
+        if (concern_flag == 1) {
+            // 查看是否已经关注？
+            if (Db.findFirst("SELECT * FROM tbuser_concern WHERE concern_id=? AND concerned_id=?", concern_id, concerned_id) == null) {
+                // 增加关注记录
+                boolean saved = new UserConcern()
+                        .set(UserConcern.ID, RandomUtils.randomCustomUUID())
+                        .set(CONCERN_ID, concern_id)
+                        .set(CONCERNED_ID, concerned_id)
+                        .save();
+                if (saved) {
+                    // 用户关注数+1
+                    Db.update("UPDATE tbuser SET num_of_care = num_of_care+1 WHERE user_id = ?", concern_id);
+                    // 被关注者粉丝数+1
+                    Db.update("UPDATE tbuser SET num_of_fans = num_of_fans+1 WHERE user_id = ?", concerned_id);
+                    renderSuccess("concern success");
+                } else {
+                    renderFailed("concern failed");
+                }
+            } else {
+                renderFailed("you have already concerned this one");
+            }
+        } else {
+            // 查看是否已经关注？
+            if (Db.findFirst("SELECT * FROM tbuser_concern WHERE concern_id=? AND concerned_id=?", concern_id, concerned_id) != null) {
+                // 删除关注记录
+                int deleted = Db.update("DELETE FROM tbuser_concern WHERE concern_id=? AND concerned_id=?", concern_id, concerned_id);
+                if (deleted > 0) {
+                    // 用户关注数-1
+                    Db.update("UPDATE tbuser SET num_of_care = num_of_care-1 WHERE user_id = ?", concern_id);
+                    // 被关注者粉丝数-1
+                    Db.update("UPDATE tbuser SET num_of_fans = num_of_fans-1 WHERE user_id = ?", concerned_id);
+                    renderSuccess("unconcern success");
+                } else {
+                    renderFailed("unconcern failed");
+                }
+            } else {
+                renderFailed("you have not concerned this one, no need to unconcern");
+            }
+        }
     }
 }
 

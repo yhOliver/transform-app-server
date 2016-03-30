@@ -72,6 +72,7 @@ public class AppConfig extends JFinalConfig {
         arp.addMapping("tbpost", Post.POST_ID, Post.class); //帖子表
         arp.addMapping("tbpost_reply", PostReply.REPLY_ID, PostReply.class); //帖子回复表
         arp.addMapping("t_zan", Zan.class); //帖子赞表
+        arp.addMapping("tbuser_concern", UserConcern.ID, UserConcern.class);//用户-关注表
     }
 
     /**

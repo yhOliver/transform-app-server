@@ -51,7 +51,7 @@ public class PostAPIController extends BaseAPIController {
     private static final int defaultPageSize = 5;
 
     /**
-     * 发帖
+     * 发帖，用户状态数+1
      */
     @Before({TribeMemberInterceptor.class, Tx.class})
     public void add() {
@@ -86,6 +86,8 @@ public class PostAPIController extends BaseAPIController {
         }
         boolean saved = post.save();
         if (saved) {
+            // 发帖成功，用户状态数+1
+            Db.update("UPDATE tbuser SET num_of_status = num_of_status+1 WHERE user_id = ?", user_id);
             renderSuccess("post save success");
         } else {
             // 删除上传文件
@@ -99,7 +101,7 @@ public class PostAPIController extends BaseAPIController {
     }
 
     /**
-     * 回复帖子
+     * 回复帖子，帖子的评论数更新
      */
     @Before({TribeMemberInterceptor.class, PostReplyInterceptor.class, Tx.class})
     public void reply() {
@@ -129,10 +131,17 @@ public class PostAPIController extends BaseAPIController {
                 .set(REPLY_CONTENT, reply_content)
                 .set(REPLY_DATE, DateUtils.currentTimeStamp())
                 .save();
+        if (saved) {
+            // 评论成功，评论数+1
+            Db.update("UPDATE tbpost SET num_of_reply = num_of_reply+1 WHERE post_id = ?", post_id);
+        }
         renderJson(new BaseResponse(saved ? Code.SUCCESS : Code.FAILURE, saved ? "reply save success" : "reply save failed"));
     }
 
-    @Before({TribeStatusInterceptor.class, PostReplyInterceptor.class})
+    /**
+     * 所有登陆用户都可以看到
+     */
+    @Before(PostReplyInterceptor.class)
     public void replies() {
         // 查找该贴子的回复列表
         String post_id = getPara(PostReply.POST_ID);
@@ -148,25 +157,52 @@ public class PostAPIController extends BaseAPIController {
     }
 
     /**
-     * 赞
+     * 点赞或取消赞，帖子的赞数更新 (所有登陆用户都可以赞)
      */
-    @Before({TribeStatusInterceptor.class, PostReplyInterceptor.class})
+    @Before({PostReplyInterceptor.class, Tx.class})
     public void zan() {
         int zan_flag = getParaToInt("zan_flag", 1); // 1点赞、0取消赞
         String user_id = getUser().userId();
         String post_id = getPara(Post.POST_ID);
-        // 删除 赞表记录
-        Db.update("DELETE FROM t_zan WHERE post_id=? AND user_id=?", post_id, user_id);
-        if (zan_flag == 1) {
-            new Zan().set(Zan.POST_ID, post_id).set(Zan.USER_ID, user_id).save();
+        if (zan_flag == 1) { // 点赞
+            // 查看是否已赞？
+            if (Db.findFirst("SELECT * FROM t_zan WHERE post_id=? AND user_id=?", post_id, user_id) == null) {
+                boolean saved = new Zan()
+                        .set(Zan.POST_ID, post_id)
+                        .set(Zan.USER_ID, user_id)
+                        .save();
+                if (saved) {
+                    // 赞+1
+                    Db.update("UPDATE tbpost SET num_of_zan = num_of_zan+1 WHERE post_id = ?", post_id);
+                    renderSuccess("zan success");
+                } else {
+                    renderFailed("zan failed");
+                }
+            } else {
+                renderFailed("you have already zan this post");
+            }
+        } else { // 取消赞
+            // 查看是否已赞？
+            if (Db.findFirst("SELECT * FROM t_zan WHERE post_id=? AND user_id=?", post_id, user_id) != null) {
+                // 删除 赞表记录
+                int deleted = Db.update("DELETE FROM t_zan WHERE post_id=? AND user_id=?", post_id, user_id);
+                if (deleted > 0) {
+                    // 赞-1
+                    Db.update("UPDATE tbpost SET num_of_zan = num_of_zan-1 WHERE post_id = ?", post_id);
+                    renderSuccess("unzan success");
+                } else {
+                    renderFailed("unzan failed");
+                }
+            } else {
+                renderFailed("you have not zan this post, no need to unzan");
+            }
         }
-        renderSuccess("success");
     }
 
     /**
      * 查看帖子详情
      */
-    @Before({TribeStatusInterceptor.class, PostReplyInterceptor.class})
+    @Before({PostReplyInterceptor.class})
     public void detail() {
         String post_id = getPara(Post.POST_ID);
         int pageSize = getParaToInt("pageSize", defaultPageSize);
