@@ -18,4 +18,8 @@ public class UserConcern extends Model<UserConcern> {
      * 被关注者ID
      */
     public static String CONCERNED_ID = "concerned_id";
+    /**
+     * 发生时间
+     */
+    public static String OCCURRENCE_TIME = "occurrence_time";
 }

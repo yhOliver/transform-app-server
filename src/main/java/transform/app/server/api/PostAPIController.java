@@ -112,9 +112,9 @@ public class PostAPIController extends BaseAPIController {
                 .put(reply_content, "reply content can not be null"))) {
             return;
         }
-        // 被回复者ID (0 表示回复帖子)
-        String reply_to_user_id = getPara(REPLY_TO_USER_ID, "0");
-        if (!"0".equals(reply_to_user_id)) {
+        // 被回复者ID
+        String reply_to_user_id = getPara(REPLY_TO_USER_ID);
+        if (StringUtils.isNotEmpty(reply_to_user_id)) {
             // 查找该贴子的回复者
             Record reply_to_user = Db.findFirst("SELECT * FROM tbpost_reply WHERE post_id = ? AND user_id = ?", post_id, reply_to_user_id);
             if (reply_to_user == null) {
@@ -168,8 +168,10 @@ public class PostAPIController extends BaseAPIController {
             // 查看是否已赞？
             if (Db.findFirst("SELECT * FROM t_zan WHERE post_id=? AND user_id=?", post_id, user_id) == null) {
                 boolean saved = new Zan()
+                        .set(Zan.ID, RandomUtils.randomCustomUUID())
                         .set(Zan.POST_ID, post_id)
                         .set(Zan.USER_ID, user_id)
+                        .set(Zan.OCCURRENCE_TIME, DateUtils.currentTimeStamp())
                         .save();
                 if (saved) {
                     // 赞+1
@@ -207,8 +209,8 @@ public class PostAPIController extends BaseAPIController {
         String post_id = getPara(Post.POST_ID);
         int pageSize = getParaToInt("pageSize", defaultPageSize);
         Post post = getAttr("post");
-        // 赞
-        List<Record> zans = Db.find("SELECT tu.user_id, tu.user_photo FROM (SELECT user_id FROM t_zan WHERE post_id = ?) tz LEFT JOIN tbuser tu ON tz.user_id = tu.user_id", post_id);
+        // 赞 (前10个赞)
+        Page<Record> zans = Db.paginate(1, 10, "SELECT tu.user_id, tu.user_photo", "FROM (SELECT user_id FROM t_zan WHERE post_id = ? ORDER BY occurrence_time DESC) tz LEFT JOIN tbuser tu ON tz.user_id = tu.user_id", post_id);
         // 评论第一页
         Page<Record> post_replies = Db.paginate(1, pageSize, "SELECT tpr.*, tu.user_nickname, tu.user_photo",
                 "FROM ( SELECT * FROM tbpost_reply WHERE post_id = ? ) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id ORDER BY tpr.reply_date", post_id);

@@ -20,5 +20,8 @@ public class TribeMember extends Model<TribeMember> {
      * 部落成员ID(除了创建者)
      */
     public static String USER_ID = "user_id";
-
+    /**
+     * 发生时间
+     */
+    public static String OCCURRENCE_TIME = "occurrence_time";
 }

@@ -148,6 +148,7 @@ public class TribeAPIController extends BaseAPIController {
                 .set(TribeMember.ID, RandomUtils.randomCustomUUID())
                 .set(TribeMember.TRIBE_ID, tribe_id)
                 .set(TribeMember.USER_ID, user_id)
+                .set(TribeMember.OCCURRENCE_TIME, DateUtils.currentTimeStamp())
                 .save();
         if (saved) {
             // 部落人数+1

@@ -403,6 +403,7 @@ public class AccountAPIController extends BaseAPIController {
                         .set(UserConcern.ID, RandomUtils.randomCustomUUID())
                         .set(CONCERN_ID, concern_id)
                         .set(CONCERNED_ID, concerned_id)
+                        .set(UserConcern.OCCURRENCE_TIME, DateUtils.currentTimeStamp())
                         .save();
                 if (saved) {
                     // 用户关注数+1
