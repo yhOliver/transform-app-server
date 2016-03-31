@@ -21,6 +21,8 @@ import transform.app.server.model.User;
 public class CommonAPIController extends BaseAPIController {
     /**
      * 处理用户意见反馈
+     * <p>
+     * POST、登陆状态、事务
      */
     @Before({POST.class, TokenInterceptor.class, Tx.class})
     public void feedback() {
@@ -33,9 +35,7 @@ public class CommonAPIController extends BaseAPIController {
         FeedBack feedBack = new FeedBack().set(FeedBack.SUGGESTION, suggestion)
                 .set(FeedBack.CREATETIME, DateUtils.currentTimeStamp());
         User user = getUser();
-        if (user != null) {
-            feedBack.set(FeedBack.USER_ID, user.userId());
-        }
+        feedBack.set(FeedBack.USER_ID, user.userId());
         //保存反馈
         boolean flag = feedBack.save();
         renderJson(new BaseResponse(flag ? Code.SUCCESS : Code.FAILURE, flag ? "意见反馈成功" : "意见反馈失败"));

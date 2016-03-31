@@ -19,8 +19,6 @@ import transform.app.server.model.Post;
 import transform.app.server.model.PostReply;
 import transform.app.server.model.Zan;
 
-import java.util.List;
-
 import static transform.app.server.model.Post.*;
 import static transform.app.server.model.PostReply.*;
 
@@ -35,11 +33,6 @@ import static transform.app.server.model.PostReply.*;
  * 帖子回复更多分页:               POST /api/post/replies
  * 点赞:                           POST /api/post/zan
  * 最新帖子:                       POST /api/post/latest
- * 某个用户的帖子列表:             POST /api/post/postsOfSomeOne (就是用户动态)
- * <p>
- * 部落内帖子列表, 所有会员可见
- * <p>
- * 非部落成员可以点赞与查看评论，部落成员可以发帖、评论
  * <p>
  * 最新帖子暂时仅按照时间排序
  *
@@ -52,8 +45,12 @@ public class PostAPIController extends BaseAPIController {
 
     /**
      * 发帖，用户状态数+1
+     * <p>
+     * 部落ID存在就是在部落内发帖，否则就是会员自己发的（tribe_id=null）,且均显示在个人动态和最新帖子中
+     * <p>
+     * POST、登陆状态、事务
      */
-    @Before({TribeMemberInterceptor.class, Tx.class})
+    @Before(Tx.class)
     public void add() {
         String device_name = getPara(DEVICE_NAME);
         //校验必填项参数
@@ -80,7 +77,7 @@ public class PostAPIController extends BaseAPIController {
             String media_urls = StringUtils.join(urls);
             post.set(MEDIA_URLS, media_urls);
         } else if ("".equals(post_content)) {
-            // 帖子没有内容~~
+            // urls == null && post_content为空，即帖子没有任何内容~~
             renderFailed("post must have something");
             return;
         }
@@ -102,8 +99,13 @@ public class PostAPIController extends BaseAPIController {
 
     /**
      * 回复帖子，帖子的评论数更新
+     * <p>
+     * 用户能看到这个帖子就说明其可以评论和点赞（不能的就查不出来。。。不是部落中的或者非关注对象发的帖子）
+     * 故这里不再检查权限了，TODO 有待进一步明确
+     * <p>
+     * POST、登陆状态、检查帖子存在、事务
      */
-    @Before({TribeMemberInterceptor.class, PostReplyInterceptor.class, Tx.class})
+    @Before({PostStatusInterceptor.class, Tx.class})
     public void reply() {
         String post_id = getPara(PostReply.POST_ID);
         String reply_content = getPara(REPLY_CONTENT);
@@ -139,27 +141,33 @@ public class PostAPIController extends BaseAPIController {
     }
 
     /**
-     * 所有登陆用户都可以看到
+     * 所有用户都可以看到，无需登录
+     * <p>
+     * POST、检查帖子存在
      */
-    @Before(PostReplyInterceptor.class)
+    @Clear
+    @Before({POST.class, PostStatusInterceptor.class})
     public void replies() {
         // 查找该贴子的回复列表
         String post_id = getPara(PostReply.POST_ID);
         int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
         int pageSize = getParaToInt("pageSize", defaultPageSize);
         /**
-         SELECT tpr.*, tu.user_nickname, tu.user_photo
-         FROM ( SELECT * FROM tbpost_reply WHERE post_id = ? ) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id ORDER BY tpr.reply_date
+         SELECT tpr.*, tu.user_nickname, tu.user_photo, tu2.user_nickname AS reply_to_username
+         FROM (SELECT * FROM tbpost_reply WHERE post_id = ?) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id LEFT JOIN tbuser tu2 ON tpr.reply_to_user_id = tu2.user_id ORDER BY tpr.reply_date
          */
-        Page<Record> post_replies = Db.paginate(pageNumber, pageSize, "SELECT tpr.*, tu.user_nickname, tu.user_photo",
-                "FROM ( SELECT * FROM tbpost_reply WHERE post_id = ? ) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id ORDER BY tpr.reply_date", post_id);
+        Page<Record> post_replies = Db.paginate(pageNumber, pageSize, "SELECT tpr.*, tu.user_nickname, tu.user_photo, tu2.user_nickname AS reply_to_username",
+                "FROM (SELECT * FROM tbpost_reply WHERE post_id = ?) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id LEFT JOIN tbuser tu2 ON tpr.reply_to_user_id = tu2.user_id ORDER BY tpr.reply_date", post_id);
         renderJson(new BaseResponse(post_replies));
     }
 
     /**
-     * 点赞或取消赞，帖子的赞数更新 (所有登陆用户都可以赞)
+     * 点赞或取消赞，帖子的赞数更新 => 与评论类似，能看到就可以赞
+     * 故这里不再检查权限了，TODO 有待进一步明确
+     * <p>
+     * POST、登陆状态、检查帖子存在、事务
      */
-    @Before({PostReplyInterceptor.class, Tx.class})
+    @Before({PostStatusInterceptor.class, Tx.class})
     public void zan() {
         int zan_flag = getParaToInt("zan_flag", 1); // 1点赞、0取消赞
         String user_id = getUser().userId();
@@ -203,8 +211,11 @@ public class PostAPIController extends BaseAPIController {
 
     /**
      * 查看帖子详情
+     * <p>
+     * POST、检查帖子存在
      */
-    @Before({PostReplyInterceptor.class})
+    @Clear
+    @Before({POST.class, PostStatusInterceptor.class})
     public void detail() {
         String post_id = getPara(Post.POST_ID);
         int pageSize = getParaToInt("pageSize", defaultPageSize);
@@ -212,8 +223,13 @@ public class PostAPIController extends BaseAPIController {
         // 赞 (前10个赞)
         Page<Record> zans = Db.paginate(1, 10, "SELECT tu.user_id, tu.user_photo", "FROM (SELECT user_id FROM t_zan WHERE post_id = ? ORDER BY occurrence_time DESC) tz LEFT JOIN tbuser tu ON tz.user_id = tu.user_id", post_id);
         // 评论第一页
-        Page<Record> post_replies = Db.paginate(1, pageSize, "SELECT tpr.*, tu.user_nickname, tu.user_photo",
-                "FROM ( SELECT * FROM tbpost_reply WHERE post_id = ? ) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id ORDER BY tpr.reply_date", post_id);
+        /**
+         SELECT tpr.*, tu.user_nickname, tu.user_photo, tu2.user_nickname AS reply_to_username
+         FROM (SELECT * FROM tbpost_reply WHERE post_id = ?) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id LEFT JOIN tbuser tu2 ON tpr.reply_to_user_id = tu2.user_id ORDER BY tpr.reply_date
+         */
+        Page<Record> post_replies = Db.paginate(1, pageSize, "SELECT tpr.*, tu.user_nickname, tu.user_photo, tu2.user_nickname AS reply_to_username",
+                "FROM (SELECT * FROM tbpost_reply WHERE post_id = ?) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id LEFT JOIN tbuser tu2 ON tpr.reply_to_user_id = tu2.user_id ORDER BY tpr.reply_date", post_id);
+
         PostDetailVO vo = new PostDetailVO();
         vo.setPost(post);
         vo.setZans(zans);
@@ -222,9 +238,12 @@ public class PostAPIController extends BaseAPIController {
     }
 
     /**
-     * 部落内帖子列表, 所有会员可见
+     * 部落内帖子列表, 所有人可见，无需登录
+     * <p>
+     * POST、检查部落存在
      */
-    @Before(TribeStatusInterceptor.class)
+    @Clear
+    @Before({POST.class, TribeStatusInterceptor.class})
     public void thread() {
         // 发帖人，头像，时间，设备，发帖内容，媒体，评论数、赞数
         /**
@@ -241,6 +260,8 @@ public class PostAPIController extends BaseAPIController {
 
     /**
      * 最新帖子, 是个人就可以看到，都不需要登陆
+     * <p>
+     * POST
      */
     @Clear
     @Before(POST.class)
@@ -249,25 +270,6 @@ public class PostAPIController extends BaseAPIController {
         int pageSize = getParaToInt("pageSize", defaultPageSize);
         Page<Record> latestThread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo",
                 "FROM tbpost tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC");
-        renderJson(new BaseResponse(latestThread));
-    }
-
-
-    /**
-     * 某个用户的帖子列表，是个人就可以看到，都不需要登陆，(就是用户动态)
-     */
-    @Clear
-    @Before(POST.class)
-    public void postsOfSomeOne() {
-        int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
-        int pageSize = getParaToInt("pageSize", defaultPageSize);
-        String user_id = getPara(Post.USER_ID);
-        if (StringUtils.isEmpty(user_id)) {
-            renderFailed("user id can not be null");
-            return;
-        }
-        Page<Record> latestThread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo",
-                "FROM (SELECT * FROM tbpost WHERE user_id = ?) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC", user_id);
         renderJson(new BaseResponse(latestThread));
     }
 }

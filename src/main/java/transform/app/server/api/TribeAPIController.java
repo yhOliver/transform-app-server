@@ -34,6 +34,11 @@ import static transform.app.server.model.User.UPDATETIME;
 @Before({POST.class, TokenInterceptor.class})
 public class TribeAPIController extends BaseAPIController {
 
+    /**
+     * 创建部落 => 登陆会员就可以
+     * <p>
+     * POST、登陆状态、事务
+     */
     @Before(Tx.class)
     public void create() {
         User user = getUser();
@@ -65,6 +70,11 @@ public class TribeAPIController extends BaseAPIController {
         renderJson(new BaseResponse("create tribe success", tribe));
     }
 
+    /**
+     * 更新部落信息 => 部落创建者
+     * <p>
+     * POST、登陆状态、部落创建者、事务
+     */
     @Before({TribeOwnerInterceptor.class, Tx.class})
     public void update() {
         boolean flag = false;
@@ -100,6 +110,9 @@ public class TribeAPIController extends BaseAPIController {
     /**
      * 修改部落头像
      * /api/tribe/avatar
+     * => 部落创建者
+     * <p>
+     * POST、登陆状态、部落创建者、事务
      */
     @Before({TribeOwnerInterceptor.class, Tx.class})
     public void avatar() {
@@ -117,6 +130,8 @@ public class TribeAPIController extends BaseAPIController {
 
     /**
      * 部落信息查看 => 是个人就可以
+     * <p>
+     * POST、检查部落存在
      */
     @Clear
     @Before({POST.class, TribeStatusInterceptor.class})
@@ -126,7 +141,9 @@ public class TribeAPIController extends BaseAPIController {
     }
 
     /**
-     * 加入部落
+     * 加入部落 =>登陆状态
+     * <p>
+     * POST、登陆状态、检查部落存在、事务
      */
     @Before({TribeStatusInterceptor.class, Tx.class})
     public void join() {
@@ -161,6 +178,8 @@ public class TribeAPIController extends BaseAPIController {
 
     /**
      * 退出部落(登陆状态，是部落成员，且不是创建者)
+     * <p>
+     * POST、登陆状态、检查是否是部落成员（包括了检查部落存在）、事务
      */
     @Before({TribeMemberInterceptor.class, Tx.class})
     public void leave() {

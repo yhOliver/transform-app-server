@@ -14,6 +14,7 @@ import transform.app.server.common.utils.MapUtils;
 import transform.app.server.common.utils.StringUtils;
 import transform.app.server.interceptor.DeviceInterceptor;
 import transform.app.server.interceptor.POST;
+import transform.app.server.interceptor.VenueStatusInterceptor;
 import transform.app.server.model.Distance;
 import transform.app.server.model.SportType;
 import transform.app.server.model.Venue;
@@ -46,6 +47,11 @@ public class VenueAPIController extends BaseAPIController {
     private static final int defaultPageNumber = 1;
     private static final int defaultPageSize = 5;
 
+    /**
+     * 获取运动类别
+     * <p>
+     * POST
+     */
     @Clear
     @Before(POST.class)
     public void types() {
@@ -70,6 +76,10 @@ public class VenueAPIController extends BaseAPIController {
      * <p>
      * 运动类别名、场馆第一张宣传图片、名称、地址、距离
      * => 已完成按照距离排序
+     * <p>
+     * 需要计算距离=>
+     * <p>
+     * POST、设备号、事务（更新距离使用）
      */
     @Before(Tx.class)
     public void venues() {
@@ -261,8 +271,11 @@ public class VenueAPIController extends BaseAPIController {
     /**
      * 按照场馆名与地址模糊查询
      * => 已经按照距离排序
+     * <p>
+     * 同venues，
+     * POST、设备号、事务（更新距离使用）
      */
-    @Before({POST.class, Tx.class})
+    @Before(Tx.class)
     public void search() {
         String device_uuid = getPara(DEVICE_UUID);
         String device_longitude = getPara("device_longitude");
@@ -298,23 +311,20 @@ public class VenueAPIController extends BaseAPIController {
 
     /**
      * 场馆详情页
+     * <p>
+     * POST、检查场馆存在并上线
      */
     @Clear
-    @Before(POST.class)
+    @Before({POST.class, VenueStatusInterceptor.class})
     public void detail() {
-        String venu_id = getPara(VENU_ID);
-        //校验参数, 确保不能为空
-        if (!notNull(Require.me().put(venu_id, "venue id can not be null"))) {
-            return;
-        }
         int pageSize = getParaToInt("pageSize", defaultPageSize);
-
-        // 已发布的该类别场馆
-        Venue venue = Venue.dao.findFirst("SELECT * FROM tbvenue WHERE venu_id=? AND venu_isonline=1", venu_id);
-        if (venue == null) {
-            renderFailed("venue is not existed or offline");
+        if (pageSize < 1) {
+            renderFailed("pageSize must more than 0");
             return;
         }
+        Venue venue = getAttr("venue");
+        String venu_id = venue.getStr(Venue.VENU_ID);
+
         VenueDetailVO vo = new VenueDetailVO();
         List<VenueSport> venueSports = VenueSport.dao.find("SELECT * FROM tbvenue_sport  WHERE venu_id=? AND vesp_isonline=1", venu_id);
         // 默认直接第1页
@@ -327,27 +337,21 @@ public class VenueAPIController extends BaseAPIController {
 
     /**
      * 场馆评价更多分页
+     * <p>
+     * POST、检查场馆存在并上线
      */
     @Clear
-    @Before(POST.class)
+    @Before({POST.class, VenueStatusInterceptor.class})
     public void comments() {
-        String venu_id = getPara(VENU_ID);
-        //校验参数, 确保不能为空
-        if (!notNull(Require.me().put(venu_id, "venue id can not be null"))) {
-            return;
-        }
         int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
         int pageSize = getParaToInt("pageSize", defaultPageSize);
         if (pageNumber < 1 || pageSize < 1) {
             renderFailed("pageNumber and pageSize must more than 0");
             return;
         }
-        // 已发布的该类别场馆
-        Venue venue = Venue.dao.findFirst("SELECT * FROM tbvenue WHERE venu_id=? AND venu_isonline=1", venu_id);
-        if (venue == null) {
-            renderFailed("venue is not existed or offline");
-            return;
-        }
+
+        Venue venue = getAttr("venue");
+        String venu_id = venue.getStr(Venue.VENU_ID);
         /**
          SELECT tc.*, tu.user_nickname
          FROM(SELECT * FROM tbvenue_comment WHERE venu_id = '124') tc LEFT JOIN tbuser tu ON tc.user_id = tu.user_id   ORDER BY  tc.createtime DESC

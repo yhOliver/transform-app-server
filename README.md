@@ -13,6 +13,7 @@
 * 获取头像:              POST /api/account/getAvatar      (也可获取他人头像)
 * 获取用户粉丝列表:      POST /api/account/fans
 * 获取用户关注列表:      POST /api/account/concerns
+* 用户动态:              POST /api/account/posts
 * 关注用户/取消关注:     POST /api/account/concern
 
 ## 公共模块接口*
@@ -49,7 +50,6 @@
 * 帖子回复更多分页:      POST /api/post/replies
 * 点赞/取消赞:           POST /api/post/zan
 * 最新帖子:              POST /api/post/latest
-* 某个用户的帖子列表:    POST /api/post/postsOfSomeOne (就是用户动态)
 
 
 ---

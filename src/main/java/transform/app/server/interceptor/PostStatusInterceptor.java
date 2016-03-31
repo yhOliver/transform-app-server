@@ -10,12 +10,12 @@ import transform.app.server.model.Post;
 import transform.app.server.model.PostReply;
 
 /**
- * 帖子拦截器（回复帖子，查看帖子回复等使用）
+ * 帖子拦截器
  *
  * @author zhuqi259
  *         2016-3-19
  */
-public class PostReplyInterceptor implements Interceptor {
+public class PostStatusInterceptor implements Interceptor {
 
     @Override
     public void intercept(Invocation inv) {

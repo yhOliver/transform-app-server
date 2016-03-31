@@ -28,6 +28,10 @@ public class FileAPIController extends BaseAPIController {
 
     /**
      * 处理单文件或多文件上传，上传成功后，返回url集合
+     * <p>
+     * 一般是发帖时使用
+     * <p>
+     * POST、登陆状态
      */
     public void upload() {
         Map<String, String> urls = new HashMap<>();//用于保存上传成功的文件地址

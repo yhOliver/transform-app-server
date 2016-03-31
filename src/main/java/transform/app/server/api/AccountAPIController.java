@@ -3,6 +3,7 @@ package transform.app.server.api;
 import com.jfinal.aop.Before;
 import com.jfinal.aop.Clear;
 import com.jfinal.plugin.activerecord.Db;
+import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.tx.Tx;
 import transform.app.server.common.Require;
@@ -16,6 +17,7 @@ import transform.app.server.config.AppProperty;
 import transform.app.server.interceptor.POST;
 import transform.app.server.interceptor.TokenInterceptor;
 import transform.app.server.interceptor.UserStatusInterceptor;
+import transform.app.server.model.Post;
 import transform.app.server.model.RegisterCode;
 import transform.app.server.model.User;
 import transform.app.server.model.UserConcern;
@@ -45,15 +47,20 @@ import static transform.app.server.model.UserConcern.CONCERN_ID;
  * 获取头像: POST /api/account/getAvatar
  * 获取用户粉丝列表: POST /api/account/fans
  * 获取用户关注列表: POST /api/account/concerns
+ * 用户动态: POST /api/account/posts
  * 关注用户（取消关注）: POST /api/account/concern
  *
  * @author zhuqi259
  */
 @Before({POST.class, TokenInterceptor.class})
 public class AccountAPIController extends BaseAPIController {
+    private static final int defaultPageNumber = 1;
+    private static final int defaultPageSize = 5;
 
     /**
      * 检查用户账号是否被注册*
+     * <p>
+     * 无登陆约束，只需POST
      */
     @Clear
     @Before(POST.class)
@@ -71,6 +78,8 @@ public class AccountAPIController extends BaseAPIController {
     /**
      * 1. 检查是否被注册*
      * 2. 发送短信验证码*
+     * <p>
+     * 无登陆约束，只需POST，事务
      */
     @Clear
     @Before({POST.class, Tx.class})
@@ -116,6 +125,8 @@ public class AccountAPIController extends BaseAPIController {
 
     /**
      * 用户注册
+     * <p>
+     * 无登陆约束，只需POST，事务
      */
     @Clear
     @Before({POST.class, Tx.class})
@@ -169,6 +180,8 @@ public class AccountAPIController extends BaseAPIController {
 
     /**
      * 登录接口
+     * <p>
+     * 无登陆约束，只需POST
      */
     @Clear
     @Before(POST.class)
@@ -198,7 +211,9 @@ public class AccountAPIController extends BaseAPIController {
     }
 
     /**
-     * 查询用户资料(也可查询他人资料)， 不需要登陆
+     * 查询用户资料(也可查询他人资料)
+     * <p>
+     * 无登陆约束，只需POST，检查该用户存在
      */
     @Clear
     @Before({POST.class, UserStatusInterceptor.class})
@@ -213,6 +228,8 @@ public class AccountAPIController extends BaseAPIController {
 
     /**
      * 修改用户资料
+     * （修改自身信息）
+     * POST，登陆状态，事务
      */
     @Before(Tx.class)
     public void update() {
@@ -285,6 +302,8 @@ public class AccountAPIController extends BaseAPIController {
 
     /**
      * 修改密码
+     * <p>
+     * POST，登陆状态，事务
      */
     @Before(Tx.class)
     public void password() {
@@ -310,6 +329,8 @@ public class AccountAPIController extends BaseAPIController {
     /**
      * 修改头像接口
      * /api/account/avatar
+     * <p>
+     * POST，登陆状态，事务
      */
     @Before(Tx.class)
     public void avatar() {
@@ -326,6 +347,8 @@ public class AccountAPIController extends BaseAPIController {
     /**
      * 获取头像接口(也可获取他人头像)
      * /api/account/getAvatar
+     * <p>
+     * 无登陆约束，只需POST，检查该用户存在
      */
     @Clear
     @Before({POST.class, UserStatusInterceptor.class})
@@ -342,6 +365,8 @@ public class AccountAPIController extends BaseAPIController {
 
     /**
      * 获取用户粉丝列表
+     * <p>
+     * 无登陆约束，只需POST，检查该用户存在
      */
     @Clear
     @Before({POST.class, UserStatusInterceptor.class})
@@ -358,6 +383,8 @@ public class AccountAPIController extends BaseAPIController {
 
     /**
      * 获取用户关注列表
+     * <p>
+     * 无登陆约束，只需POST，检查该用户存在
      */
     @Clear
     @Before({POST.class, UserStatusInterceptor.class})
@@ -372,9 +399,28 @@ public class AccountAPIController extends BaseAPIController {
         renderJson(new BaseResponse(cons));
     }
 
+
+    /**
+     * 用户动态 => 用户的帖子列表
+     * <p>
+     * 无登陆约束，只需POST，检查该用户存在
+     */
+    @Clear
+    @Before({POST.class, UserStatusInterceptor.class})
+    public void posts() {
+        int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
+        int pageSize = getParaToInt("pageSize", defaultPageSize);
+        String user_id = getPara(Post.USER_ID);
+        Page<Record> latestThread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo",
+                "FROM (SELECT * FROM tbpost WHERE user_id = ?) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC", user_id);
+        renderJson(new BaseResponse(latestThread));
+    }
+
     /**
      * 关注用户（取消关注）: (需要登录，被关注者必须存在)
      * /api/account/concern
+     * <p>
+     * POST、登陆状态、事务、被关注者存在
      */
     @Before(Tx.class)
     public void concern() {
