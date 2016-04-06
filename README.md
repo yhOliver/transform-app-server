@@ -31,6 +31,7 @@
 * 模糊查询场馆列表:      POST /api/venue/search
 * 场馆详情:              POST /api/venue/detail
 * 场馆评价更多分页:      POST /api/venue/comments
+* 评价场馆:              POST /api/venue/comment
 
 ## 部落相关的接口*
 

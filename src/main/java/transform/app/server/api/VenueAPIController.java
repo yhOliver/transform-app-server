@@ -11,22 +11,22 @@ import transform.app.server.common.Require;
 import transform.app.server.common.bean.*;
 import transform.app.server.common.utils.DateUtils;
 import transform.app.server.common.utils.MapUtils;
+import transform.app.server.common.utils.RandomUtils;
 import transform.app.server.common.utils.StringUtils;
 import transform.app.server.interceptor.DeviceInterceptor;
 import transform.app.server.interceptor.POST;
+import transform.app.server.interceptor.TokenInterceptor;
 import transform.app.server.interceptor.VenueStatusInterceptor;
-import transform.app.server.model.Distance;
-import transform.app.server.model.SportType;
-import transform.app.server.model.Venue;
-import transform.app.server.model.VenueSport;
+import transform.app.server.model.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static transform.app.server.model.Distance.*;
-import static transform.app.server.model.Distance.VENU_ID;
 import static transform.app.server.model.SportType.SPTY_ID;
 import static transform.app.server.model.Venue.*;
+import static transform.app.server.model.VenueComment.CONTENT;
+import static transform.app.server.model.VenueComment.VECO_ID;
 
 
 /**
@@ -37,6 +37,8 @@ import static transform.app.server.model.Venue.*;
  * 模糊查询-按照场馆名称或地址查询场馆列表: POST /api/venue/search
  * 场馆详情:         POST /api/venue/detail
  * 场馆评价更多分页: POST /api/venue/comments
+ * <p>
+ * 评价场馆:  POST /api/venue/comment
  *
  * @author zhuqi259
  */
@@ -375,6 +377,34 @@ public class VenueAPIController extends BaseAPIController {
             distances.add(distance);
         }
         Db.batchSave(distances, 1000); //批量保存
+    }
+
+
+    /**
+     * 评价场馆
+     * <p>
+     * POST、用户登录状态、检查场馆存在并上线
+     */
+    @Clear
+    @Before({POST.class, TokenInterceptor.class, VenueStatusInterceptor.class})
+    public void comment() {
+        String content = getPara(CONTENT);
+        if (!notNull(Require.me().put(content, "content can not be null"))) {
+            return;
+        }
+        User user = getUser();
+        String user_id = user.userId();
+        Venue venue = getAttr("venue");
+        String venu_id = venue.getStr(Venue.VENU_ID);
+
+        boolean saved = new VenueComment()
+                .set(VECO_ID, RandomUtils.randomCustomUUID())
+                .set(VenueComment.VENU_ID, venu_id)
+                .set(VenueComment.USER_ID, user_id)
+                .set(CONTENT, content)
+                .set(VenueComment.CREATETINE, DateUtils.currentTimeStamp())
+                .save();
+        renderJson(new BaseResponse().setSuccess(saved ? Code.SUCCESS : Code.FAILURE).setMsg(saved ? "comment success" : "comment failed"));
     }
 }
 
