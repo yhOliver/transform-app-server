@@ -37,7 +37,6 @@ import static transform.app.server.model.VenueComment.VECO_ID;
  * 模糊查询-按照场馆名称或地址查询场馆列表: POST /api/venue/search
  * 场馆详情:         POST /api/venue/detail
  * 场馆评价更多分页: POST /api/venue/comments
- * <p>
  * 评价场馆:  POST /api/venue/comment
  *
  * @author zhuqi259
