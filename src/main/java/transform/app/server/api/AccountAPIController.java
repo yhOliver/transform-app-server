@@ -120,7 +120,8 @@ public class AccountAPIController extends BaseAPIController {
         } else {
             registerCode.update();
         }
-        renderJson(new BaseResponse("sms sended"));
+        // renderJson(new BaseResponse("sms sended"));
+        renderJson(new BaseResponse().setSuccess(Code.SUCCESS).setMsg("sms sended").setResult(smsCode));
     }
 
     /**
@@ -175,7 +176,17 @@ public class AccountAPIController extends BaseAPIController {
         Db.update("DELETE FROM t_register_code WHERE mobile=? AND code = ?", user_mobile, code);
 
         //返回数据
-        renderJson(new BaseResponse("success"));
+        // renderJson(new BaseResponse("success"));
+
+        String sql = "SELECT * FROM tbuser WHERE user_mobile=? AND pwd=?";
+        User nowUser = User.dao.findFirst(sql, user_mobile, password);
+        if (nowUser == null) {
+            renderJson(new BaseResponse(Code.FAILURE, "userName or password is error"));
+            return;
+        }
+        LoginVO vo = new LoginVO();
+        vo.setToken(TokenManager.getMe().generateToken(nowUser));
+        renderJson(new BaseResponse("register success", vo));
     }
 
     /**
