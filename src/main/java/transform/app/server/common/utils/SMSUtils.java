@@ -17,7 +17,7 @@ public class SMSUtils {
      * @return 是否有效
      */
     public static final boolean isMobileNo(String mobile){
-        Pattern p = Pattern.compile("^((13[0-9])|(15[^4,\\D])|(18[0,5-9]))\\d{8}$");
+        Pattern p = Pattern.compile("^((1[3578][0-9])|(14[57]))\\d{8}$");
         Matcher m = p.matcher(mobile);
         return m.matches();
     }
@@ -29,7 +29,7 @@ public class SMSUtils {
      */
     public static final String randomSMSCode(int length) {
         boolean numberFlag = true;
-        String retStr = "";
+        String retStr;
         String strTable = numberFlag ? "1234567890" : "1234567890abcdefghijkmnpqrstuvwxyz";
         int len = strTable.length();
         boolean bDone = true;
