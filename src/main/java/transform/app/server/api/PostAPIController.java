@@ -35,6 +35,9 @@ import static transform.app.server.model.PostReply.*;
  * 最新帖子:                       POST /api/post/latest
  * <p>
  * 最新帖子暂时仅按照时间排序
+ * <p>
+ * 删帖:                           POST /api/post/del
+ * 删回复:                         POST /api/post/delReply
  *
  * @author zhuqi259
  */
@@ -274,6 +277,55 @@ public class PostAPIController extends BaseAPIController {
         Page<Record> latestThread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo",
                 "FROM (SELECT * FROM tbpost WHERE status=1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC");
         renderJson(new BaseResponse(latestThread));
+    }
+
+    /**
+     * 删帖， 帖子发布者 （用户状态数-1）
+     * <p>
+     * POST、登陆、帖子状态
+     */
+    @Before(PostStatusInterceptor.class)
+    public void del() {
+        String user_id = getUser().userId();
+        String post_id = getPara(Post.POST_ID);
+        // 删除帖子
+        int deleted = Db.update("UPDATE tbpost SET status=0 WHERE post_id=? AND user_id=?", post_id, user_id); // 只能删自己的帖子
+        if (deleted > 0) {
+            // 删帖成功 => 用户状态数-1
+            Db.update("UPDATE tbuser SET num_of_status = num_of_status-1 WHERE user_id = ?", user_id);
+            renderSuccess("del post success");
+        } else {
+            renderFailed("del post failed");
+        }
+    }
+
+    /**
+     * 删回复（帖子的回复数-1）
+     * <p>
+     * POST、登陆、回复者
+     */
+    public void delReply() {
+        String user_id = getUser().userId();
+        String reply_id = getPara(PostReply.REPLY_ID);
+        if (StringUtils.isEmpty(reply_id)) {
+            renderFailed("reply id can not be null");
+            return;
+        }
+        PostReply postReply = PostReply.dao.findFirst("SELECT * FROM tbpost_reply WHERE reply_id=? AND status=1", reply_id);
+        if(postReply == null){
+            renderFailed("reply is not found");
+            return;
+        }
+        // 删除回复
+        int deleted = Db.update("UPDATE tbpost_reply SET status=0 WHERE reply_id=? AND user_id=?", reply_id, user_id); // 只能删自己的回复
+        if (deleted > 0) {
+            // 删回复成功，帖子的回复数-1
+            String post_id = postReply.getStr(PostReply.POST_ID);
+            Db.update("UPDATE tbpost SET num_of_reply = num_of_reply-1 WHERE post_id = ?", post_id);
+            renderSuccess("del reply success");
+        } else {
+            renderFailed("del reply failed");
+        }
     }
 }
 

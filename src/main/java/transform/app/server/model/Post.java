@@ -18,7 +18,6 @@ public class Post extends Model<Post> {
      * 帖子创建者ID
      */
     public static String USER_ID = "user_id";
-
     /**
      * 设备名称(来自 iphone 6S)
      */

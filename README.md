@@ -51,7 +51,8 @@
 * 帖子回复更多分页:      POST /api/post/replies
 * 点赞/取消赞:           POST /api/post/zan
 * 最新帖子:              POST /api/post/latest
-
+* 删帖:                  POST /api/post/del
+* 删回复:                POST /api/post/delReply
 
 ---
 #### 替换触发器
@@ -59,12 +60,12 @@
 * 评论成功，帖子评论数+1      V
 * 点赞/取消赞，更新帖子赞数   V
 * 关注用户/取消关注           V
-* 加入(退出)部落              V
-* 删帖
+* 加入(退出)部落              V   
+* 删帖                        V
 * 删评论
 
 ---
 #### 增加软删除(或禁用)
-* 登陆                          V
-* 删帖
-* 删评论
+* 登陆                        V
+* 删帖                        V
+* 删评论                      V
