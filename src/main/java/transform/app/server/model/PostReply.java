@@ -31,4 +31,8 @@ public class PostReply extends Model<PostReply> {
      */
     public static String REPLY_DATE = "reply_date";
 
+    /**
+     * 软删除状态
+     */
+    public static String STATUS = "status";
 }

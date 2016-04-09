@@ -72,7 +72,8 @@ public class PostAPIController extends BaseAPIController {
                 .set(POST_CONTENT, post_content)
                 .set(POST_DATE, DateUtils.currentTimeStamp())
                 .set(NUM_OF_REPLY, 0)
-                .set(NUM_OF_ZAN, 0);
+                .set(NUM_OF_ZAN, 0)
+                .set(Post.STATUS, 1);
         if (urls != null) {
             String media_urls = StringUtils.join(urls);
             post.set(MEDIA_URLS, media_urls);
@@ -132,6 +133,7 @@ public class PostAPIController extends BaseAPIController {
                 .set(REPLY_TO_USER_ID, reply_to_user_id)
                 .set(REPLY_CONTENT, reply_content)
                 .set(REPLY_DATE, DateUtils.currentTimeStamp())
+                .set(PostReply.STATUS, 1)
                 .save();
         if (saved) {
             // 评论成功，评论数+1
@@ -152,12 +154,13 @@ public class PostAPIController extends BaseAPIController {
         String post_id = getPara(PostReply.POST_ID);
         int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
         int pageSize = getParaToInt("pageSize", defaultPageSize);
+        // 此时帖子已存在，只需判断回复状态
         /**
          SELECT tpr.*, tu.user_nickname, tu.user_photo, tu2.user_nickname AS reply_to_username
-         FROM (SELECT * FROM tbpost_reply WHERE post_id = ?) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id LEFT JOIN tbuser tu2 ON tpr.reply_to_user_id = tu2.user_id ORDER BY tpr.reply_date
+         FROM (SELECT * FROM tbpost_reply WHERE post_id = ? AND status=1) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id LEFT JOIN tbuser tu2 ON tpr.reply_to_user_id = tu2.user_id ORDER BY tpr.reply_date
          */
         Page<Record> post_replies = Db.paginate(pageNumber, pageSize, "SELECT tpr.*, tu.user_nickname, tu.user_photo, tu2.user_nickname AS reply_to_username",
-                "FROM (SELECT * FROM tbpost_reply WHERE post_id = ?) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id LEFT JOIN tbuser tu2 ON tpr.reply_to_user_id = tu2.user_id ORDER BY tpr.reply_date", post_id);
+                "FROM (SELECT * FROM tbpost_reply WHERE post_id = ? AND status=1) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id LEFT JOIN tbuser tu2 ON tpr.reply_to_user_id = tu2.user_id ORDER BY tpr.reply_date", post_id);
         renderJson(new BaseResponse(post_replies));
     }
 
@@ -225,10 +228,10 @@ public class PostAPIController extends BaseAPIController {
         // 评论第一页
         /**
          SELECT tpr.*, tu.user_nickname, tu.user_photo, tu2.user_nickname AS reply_to_username
-         FROM (SELECT * FROM tbpost_reply WHERE post_id = ?) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id LEFT JOIN tbuser tu2 ON tpr.reply_to_user_id = tu2.user_id ORDER BY tpr.reply_date
+         FROM (SELECT * FROM tbpost_reply WHERE post_id = ? AND status=1) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id LEFT JOIN tbuser tu2 ON tpr.reply_to_user_id = tu2.user_id ORDER BY tpr.reply_date
          */
         Page<Record> post_replies = Db.paginate(1, pageSize, "SELECT tpr.*, tu.user_nickname, tu.user_photo, tu2.user_nickname AS reply_to_username",
-                "FROM (SELECT * FROM tbpost_reply WHERE post_id = ?) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id LEFT JOIN tbuser tu2 ON tpr.reply_to_user_id = tu2.user_id ORDER BY tpr.reply_date", post_id);
+                "FROM (SELECT * FROM tbpost_reply WHERE post_id = ? AND status=1) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id LEFT JOIN tbuser tu2 ON tpr.reply_to_user_id = tu2.user_id ORDER BY tpr.reply_date", post_id);
 
         PostDetailVO vo = new PostDetailVO();
         vo.setPost(post);
@@ -248,13 +251,13 @@ public class PostAPIController extends BaseAPIController {
         // 发帖人，头像，时间，设备，发帖内容，媒体，评论数、赞数
         /**
          SELECT tp.*, tu.user_nickname, tu.user_photo
-         FROM (SELECT * FROM tbpost WHERE tribe_id = ?) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC
+         FROM (SELECT * FROM tbpost WHERE tribe_id = ? AND status=1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC
          */
         int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
         int pageSize = getParaToInt("pageSize", defaultPageSize);
         String tribe_id = getPara(TRIBE_ID);
         Page<Record> thread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo",
-                "FROM (SELECT * FROM tbpost WHERE tribe_id = ?) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC", tribe_id);
+                "FROM (SELECT * FROM tbpost WHERE tribe_id = ? AND status=1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC", tribe_id);
         renderJson(new BaseResponse(thread));
     }
 
@@ -269,7 +272,7 @@ public class PostAPIController extends BaseAPIController {
         int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
         int pageSize = getParaToInt("pageSize", defaultPageSize);
         Page<Record> latestThread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo",
-                "FROM tbpost tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC");
+                "FROM (SELECT * FROM tbpost WHERE status=1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC");
         renderJson(new BaseResponse(latestThread));
     }
 }

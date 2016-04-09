@@ -25,7 +25,7 @@ public class PostStatusInterceptor implements Interceptor {
             controller.renderJson(new BaseResponse(Code.FAILURE, "post id can not be null"));
             return;
         }
-        Post post = Post.dao.findById(post_id);
+        Post post = Post.dao.findFirst("SELECT * FROM tbpost WHERE post_id=? AND status=1", post_id);
         if (post == null) {
             controller.renderJson(new BaseResponse(Code.FAILURE, "post is not found"));// 找不到帖子
         } else {

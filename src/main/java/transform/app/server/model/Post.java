@@ -43,6 +43,10 @@ public class Post extends Model<Post> {
      * 赞数
      */
     public static String NUM_OF_ZAN = "num_of_zan";
+    /**
+     * 软删除状态
+     */
+    public static String STATUS = "status";
 
     public static Post dao = new Post();
 }
