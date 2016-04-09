@@ -56,7 +56,7 @@ public class VenueAPIController extends BaseAPIController {
     @Clear
     @Before(POST.class)
     public void types() {
-        List<SportType> sportTypes = SportType.dao.find("SELECT * FROM tbsport_typedic");
+        List<SportType> sportTypes = SportType.dao.find("SELECT * FROM tbsport_typedic ORDER BY spty_seq DESC");
         renderJson(new BaseResponse(sportTypes));
     }
 
