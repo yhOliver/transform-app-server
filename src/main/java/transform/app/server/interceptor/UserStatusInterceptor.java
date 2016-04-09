@@ -27,9 +27,9 @@ public class UserStatusInterceptor implements Interceptor {
             controller.renderJson(new BaseResponse(Code.FAILURE, "user id can not be null"));
             return;
         }
-        User user = User.dao.findById(user_id);
+        User user = User.dao.findFirst("SELECT * FROM tbuser WHERE user_id=? AND status=1", user_id);
         if (user == null) {
-            controller.renderJson(new BaseResponse(Code.FAILURE, "user is not found"));
+            controller.renderJson(new BaseResponse(Code.FAILURE, "user is not found or is forbidden"));
             return;
         }
         controller.setAttr("user", user);

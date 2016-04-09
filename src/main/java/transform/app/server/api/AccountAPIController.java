@@ -170,6 +170,7 @@ public class AccountAPIController extends BaseAPIController {
                 .set(NUM_OF_CARE, 0)
                 .set(NUM_OF_FANS, 0)
                 .set(NUM_OF_STATUS, 0)
+                .set(STATUS, 1)
                 .save();
 
         //删除验证码记录
@@ -178,10 +179,10 @@ public class AccountAPIController extends BaseAPIController {
         //返回数据
         // renderJson(new BaseResponse("success"));
 
-        String sql = "SELECT * FROM tbuser WHERE user_mobile=? AND pwd=?";
+        String sql = "SELECT * FROM tbuser WHERE user_mobile=? AND pwd=? AND status=1"; // 禁用字段=1
         User nowUser = User.dao.findFirst(sql, user_mobile, password);
         if (nowUser == null) {
-            renderJson(new BaseResponse(Code.FAILURE, "userName or password is error"));
+            renderJson(new BaseResponse(Code.FAILURE, "userName or password is error, or the user is forbidden"));
             return;
         }
         LoginVO vo = new LoginVO();
@@ -206,10 +207,10 @@ public class AccountAPIController extends BaseAPIController {
         )) {
             return;
         }
-        String sql = "SELECT * FROM tbuser WHERE user_mobile=? AND pwd=?";
+        String sql = "SELECT * FROM tbuser WHERE user_mobile=? AND pwd=? AND status=1";
         User nowUser = User.dao.findFirst(sql, user_mobile, password);
         if (nowUser == null) {
-            renderJson(new BaseResponse(Code.FAILURE, "userName or password is error"));
+            renderJson(new BaseResponse(Code.FAILURE, "userName or password is error, or the user is forbidden"));
             return;
         }
         LoginVO vo = new LoginVO();

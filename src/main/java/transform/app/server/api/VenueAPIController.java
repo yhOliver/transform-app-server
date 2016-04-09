@@ -327,7 +327,7 @@ public class VenueAPIController extends BaseAPIController {
         String venu_id = venue.getStr(Venue.VENU_ID);
 
         VenueDetailVO vo = new VenueDetailVO();
-        List<VenueSport> venueSports = VenueSport.dao.find("SELECT * FROM tbvenue_sport  WHERE venu_id=? AND vesp_isonline=1", venu_id);
+        List<VenueSport> venueSports = VenueSport.dao.find("SELECT * FROM tbvenue_sport WHERE venu_id=? AND vesp_isonline=1", venu_id);
         // 默认直接第1页
         Page<Record> venueComments = Db.paginate(1, pageSize, "SELECT tc.*, tu.user_nickname", "FROM(SELECT * FROM tbvenue_comment WHERE venu_id=?) tc LEFT JOIN tbuser tu ON tc.user_id=tu.user_id ORDER BY tc.createtime DESC", venu_id);
         vo.setVenue(venue);
