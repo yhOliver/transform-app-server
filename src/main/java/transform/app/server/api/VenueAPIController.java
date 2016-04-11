@@ -155,6 +155,7 @@ public class VenueAPIController extends BaseAPIController {
              WHERE
              venu_isonline = 1
              AND venu_city = '长春市'
+             AND monday = 1
              ) tv
              LEFT JOIN (
              SELECT
@@ -164,10 +165,12 @@ public class VenueAPIController extends BaseAPIController {
              FROM
              t_distance
              WHERE
-             device_uuid = 'a-1234567765'
+             device_uuid = 'ffffffff-ff70-8e7e-c352-0a700033c587'
              ) td ON tv.venu_id = td.venu_id
              ) tvd ON tvd.venu_id = tvs.venu_id
-             LEFT JOIN (SELECT * FROM tbsport_typedic) dic ON dic.spty_id = tvs.spty_id
+             LEFT JOIN tbsport_typedic dic ON dic.spty_id = tvs.spty_id
+             WHERE
+             tvd.venu_id IS NOT NULL
              GROUP BY
              tvs.spty_id,
              tvd.venu_id
@@ -175,12 +178,12 @@ public class VenueAPIController extends BaseAPIController {
              tvs.spty_id,
              tvd.dv_distance
 
-
              即
              SELECT dic.*, tvd.*
              FROM (SELECT DISTINCT spty_id, venu_id FROM tbvenue_sport WHERE vesp_isonline = 1) tvs
-             LEFT JOIN (SELECT tv.*, td.device_uuid, td.dv_distance FROM (SELECT * FROM tbvenue WHERE venu_isonline = 1 AND venu_city = '长春市') tv LEFT JOIN (SELECT venu_id, device_uuid, dv_distance FROM t_distance WHERE device_uuid = 'a-1234567765') td ON tv.venu_id = td.venu_id) tvd ON tvd.venu_id = tvs.venu_id
-             LEFT JOIN (SELECT * FROM tbsport_typedic) dic ON dic.spty_id = tvs.spty_id
+             LEFT JOIN (SELECT tv.*, td.device_uuid, td.dv_distance FROM (SELECT * FROM tbvenue WHERE venu_isonline = 1 AND venu_city = '长春市' AND monday = 1) tv LEFT JOIN (SELECT venu_id, device_uuid, dv_distance FROM t_distance WHERE device_uuid = 'ffffffff-ff70-8e7e-c352-0a700033c587') td ON tv.venu_id = td.venu_id) tvd ON tvd.venu_id = tvs.venu_id
+             LEFT JOIN tbsport_typedic dic ON dic.spty_id = tvs.spty_id
+             WHERE tvd.venu_id IS NOT NULL
              GROUP BY tvs.spty_id, tvd.venu_id
              ORDER BY tvs.spty_id, tvd.dv_distance
              */
@@ -190,10 +193,11 @@ public class VenueAPIController extends BaseAPIController {
                 sb.append("AND venu_proper=? ");
             }
             sb.append(") tv LEFT JOIN (SELECT venu_id, device_uuid, dv_distance FROM t_distance WHERE device_uuid = ?) td ON tv.venu_id = td.venu_id) tvd ON tvd.venu_id = tvs.venu_id ");
-            sb.append("LEFT JOIN (SELECT * FROM tbsport_typedic) dic ON dic.spty_id = tvs.spty_id ");
+            sb.append("LEFT JOIN tbsport_typedic dic ON dic.spty_id = tvs.spty_id ");
+            sb.append("WHERE tvd.venu_id IS NOT NULL ");
             sb.append("GROUP BY tvs.spty_id, tvd.venu_id ");
             sb.append("ORDER BY tvs.spty_id, tvd.dv_distance ");
-            // System.out.println(sb.toString());
+            System.out.println(sb.toString());
             if (StringUtils.isNotEmpty(venu_proper)) {
                 venuePage = Db.paginate(pageNumber, pageSize, true, "SELECT dic.*, tvd.* ", sb.toString(), venu_city, venu_proper, device_uuid);
             } else {
@@ -228,6 +232,7 @@ public class VenueAPIController extends BaseAPIController {
              WHERE
              venu_isonline = 1
              AND venu_city = '长春市'
+             AND monday = 1
              ) tv
              LEFT JOIN (
              SELECT
@@ -237,18 +242,21 @@ public class VenueAPIController extends BaseAPIController {
              FROM
              t_distance
              WHERE
-             device_uuid = 'a-1234567765'
+             device_uuid = 'ffffffff-ff70-8e7e-c352-0a700033c587'
              ) td ON tv.venu_id = td.venu_id
              ) tvd ON tvd.venu_id = tvs.venu_id
-             LEFT JOIN (SELECT * FROM tbsport_typedic) dic ON dic.spty_id = tvs.spty_id
+             LEFT JOIN tbsport_typedic dic ON dic.spty_id = tvs.spty_id
+             WHERE
+             tvd.venu_id IS NOT NULL
              ORDER BY
              tvd.dv_distance
 
              即
              SELECT dic.*, tvd.*
              FROM (SELECT DISTINCT venu_id, spty_id FROM tbvenue_sport WHERE vesp_isonline = 1 AND spty_id = '1') tvs
-             LEFT JOIN (SELECT tv.*, td.device_uuid, td.dv_distance FROM (SELECT * FROM tbvenue WHERE venu_isonline = 1 AND venu_city = '长春市') tv LEFT JOIN (SELECT venu_id, device_uuid, dv_distance FROM t_distance WHERE device_uuid = 'a-1234567765') td ON tv.venu_id = td.venu_id) tvd ON tvd.venu_id = tvs.venu_id
-             LEFT JOIN (SELECT * FROM tbsport_typedic) dic ON dic.spty_id = tvs.spty_id
+             LEFT JOIN (SELECT tv.*, td.device_uuid, td.dv_distance FROM (SELECT * FROM tbvenue WHERE venu_isonline = 1 AND venu_city = '长春市' AND monday = 1) tv LEFT JOIN (SELECT venu_id, device_uuid, dv_distance FROM t_distance WHERE device_uuid = 'ffffffff-ff70-8e7e-c352-0a700033c587') td ON tv.venu_id = td.venu_id) tvd ON tvd.venu_id = tvs.venu_id
+             LEFT JOIN tbsport_typedic dic ON dic.spty_id = tvs.spty_id
+             WHERE tvd.venu_id IS NOT NULL
              ORDER BY tvd.dv_distance
              */
             sb.append("FROM (SELECT DISTINCT venu_id, spty_id FROM tbvenue_sport WHERE vesp_isonline = 1 AND spty_id = ?) tvs ");
@@ -257,9 +265,10 @@ public class VenueAPIController extends BaseAPIController {
                 sb.append("AND venu_proper=? ");
             }
             sb.append(") tv LEFT JOIN (SELECT venu_id, device_uuid, dv_distance FROM t_distance WHERE device_uuid = ?) td ON tv.venu_id = td.venu_id) tvd ON tvd.venu_id = tvs.venu_id ");
-            sb.append("LEFT JOIN (SELECT * FROM tbsport_typedic) dic ON dic.spty_id = tvs.spty_id ");
+            sb.append("LEFT JOIN tbsport_typedic dic ON dic.spty_id = tvs.spty_id ");
+            sb.append("WHERE tvd.venu_id IS NOT NULL ");
             sb.append("ORDER BY tvd.dv_distance ");
-            // System.out.println(sb.toString());
+            System.out.println(sb.toString());
             if (StringUtils.isNotEmpty(venu_proper)) {
                 venuePage = Db.paginate(pageNumber, pageSize, "SELECT dic.*, tvd.* ", sb.toString(), spty_id, venu_city, venu_proper, device_uuid);
             } else {
@@ -306,7 +315,7 @@ public class VenueAPIController extends BaseAPIController {
         }
         // 按照距离排序
         // 距离表中存在的才应该显示出来~~
-        Page<Record> venuePage = Db.paginate(pageNumber, pageSize, "SELECT td.dv_distance, tv.venu_id, tv.venu_name, tv.venu_address, tv.img0", "FROM (SELECT * FROM t_distance WHERE device_uuid=? ) td LEFT JOIN tbvenue tv ON td.venu_id = tv.venu_id ORDER BY td.dv_distance", device_uuid);
+        Page<Record> venuePage = Db.paginate(pageNumber, pageSize, "SELECT td.dv_distance, tv.venu_id, tv.venu_name, tv.venu_address, tv.img0", "FROM (SELECT * FROM t_distance WHERE device_uuid=? ) td LEFT JOIN tbvenue tv ON td.venu_id = tv.venu_id ORDER BY td.dv_distance", device_uuid); // LEFT JOIN 没问题
         renderJson(new BaseResponse(venuePage));
     }
 
@@ -329,7 +338,7 @@ public class VenueAPIController extends BaseAPIController {
         VenueDetailVO vo = new VenueDetailVO();
         List<VenueSport> venueSports = VenueSport.dao.find("SELECT * FROM tbvenue_sport WHERE venu_id=? AND vesp_isonline=1", venu_id);
         // 默认直接第1页
-        Page<Record> venueComments = Db.paginate(1, pageSize, "SELECT tc.*, tu.user_nickname", "FROM(SELECT * FROM tbvenue_comment WHERE venu_id=?) tc LEFT JOIN tbuser tu ON tc.user_id=tu.user_id ORDER BY tc.createtime DESC", venu_id);
+        Page<Record> venueComments = Db.paginate(1, pageSize, "SELECT tc.*, tu.user_nickname", "FROM(SELECT * FROM tbvenue_comment WHERE venu_id=?) tc LEFT JOIN tbuser tu ON tc.user_id=tu.user_id ORDER BY tc.createtime DESC", venu_id); // LEFT JOIN 没问题
         vo.setVenue(venue);
         vo.setVenueSports(venueSports);
         vo.setVenueComments(venueComments);
@@ -357,7 +366,7 @@ public class VenueAPIController extends BaseAPIController {
          SELECT tc.*, tu.user_nickname
          FROM(SELECT * FROM tbvenue_comment WHERE venu_id = '124') tc LEFT JOIN tbuser tu ON tc.user_id = tu.user_id   ORDER BY  tc.createtime DESC
          */
-        Page<Record> venueComments = Db.paginate(pageNumber, pageSize, "SELECT tc.*, tu.user_nickname", "FROM(SELECT * FROM tbvenue_comment WHERE venu_id=?) tc LEFT JOIN tbuser tu ON tc.user_id=tu.user_id ORDER BY tc.createtime DESC", venu_id);
+        Page<Record> venueComments = Db.paginate(pageNumber, pageSize, "SELECT tc.*, tu.user_nickname", "FROM(SELECT * FROM tbvenue_comment WHERE venu_id=?) tc LEFT JOIN tbuser tu ON tc.user_id=tu.user_id ORDER BY tc.createtime DESC", venu_id); // LEFT JOIN 没问题
         renderJson(new BaseResponse(venueComments));
     }
 

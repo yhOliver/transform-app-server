@@ -163,7 +163,7 @@ public class PostAPIController extends BaseAPIController {
          FROM (SELECT * FROM tbpost_reply WHERE post_id = ? AND status=1) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id LEFT JOIN tbuser tu2 ON tpr.reply_to_user_id = tu2.user_id ORDER BY tpr.reply_date
          */
         Page<Record> post_replies = Db.paginate(pageNumber, pageSize, "SELECT tpr.*, tu.user_nickname, tu.user_photo, tu2.user_nickname AS reply_to_username",
-                "FROM (SELECT * FROM tbpost_reply WHERE post_id = ? AND status=1) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id LEFT JOIN tbuser tu2 ON tpr.reply_to_user_id = tu2.user_id ORDER BY tpr.reply_date", post_id);
+                "FROM (SELECT * FROM tbpost_reply WHERE post_id = ? AND status=1) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id LEFT JOIN tbuser tu2 ON tpr.reply_to_user_id = tu2.user_id ORDER BY tpr.reply_date", post_id); // LEFT JOIN 没问题
         renderJson(new BaseResponse(post_replies));
     }
 
@@ -227,14 +227,14 @@ public class PostAPIController extends BaseAPIController {
         int pageSize = getParaToInt("pageSize", defaultPageSize);
         Post post = getAttr("post");
         // 赞 (前10个赞)
-        Page<Record> zans = Db.paginate(1, 10, "SELECT tu.user_id, tu.user_photo", "FROM (SELECT user_id FROM t_zan WHERE post_id = ? ORDER BY occurrence_time DESC) tz LEFT JOIN tbuser tu ON tz.user_id = tu.user_id", post_id);
+        Page<Record> zans = Db.paginate(1, 10, "SELECT tu.user_id, tu.user_photo", "FROM (SELECT user_id FROM t_zan WHERE post_id = ? ORDER BY occurrence_time DESC) tz LEFT JOIN tbuser tu ON tz.user_id = tu.user_id", post_id); // LEFT JOIN 没问题
         // 评论第一页
         /**
          SELECT tpr.*, tu.user_nickname, tu.user_photo, tu2.user_nickname AS reply_to_username
          FROM (SELECT * FROM tbpost_reply WHERE post_id = ? AND status=1) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id LEFT JOIN tbuser tu2 ON tpr.reply_to_user_id = tu2.user_id ORDER BY tpr.reply_date
          */
         Page<Record> post_replies = Db.paginate(1, pageSize, "SELECT tpr.*, tu.user_nickname, tu.user_photo, tu2.user_nickname AS reply_to_username",
-                "FROM (SELECT * FROM tbpost_reply WHERE post_id = ? AND status=1) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id LEFT JOIN tbuser tu2 ON tpr.reply_to_user_id = tu2.user_id ORDER BY tpr.reply_date", post_id);
+                "FROM (SELECT * FROM tbpost_reply WHERE post_id = ? AND status=1) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id LEFT JOIN tbuser tu2 ON tpr.reply_to_user_id = tu2.user_id ORDER BY tpr.reply_date", post_id); // LEFT JOIN 没问题
 
         PostDetailVO vo = new PostDetailVO();
         vo.setPost(post);
@@ -260,7 +260,7 @@ public class PostAPIController extends BaseAPIController {
         int pageSize = getParaToInt("pageSize", defaultPageSize);
         String tribe_id = getPara(TRIBE_ID);
         Page<Record> thread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo",
-                "FROM (SELECT * FROM tbpost WHERE tribe_id = ? AND status=1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC", tribe_id);
+                "FROM (SELECT * FROM tbpost WHERE tribe_id = ? AND status=1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC", tribe_id); // LEFT JOIN 没问题
         renderJson(new BaseResponse(thread));
     }
 
@@ -275,7 +275,7 @@ public class PostAPIController extends BaseAPIController {
         int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
         int pageSize = getParaToInt("pageSize", defaultPageSize);
         Page<Record> latestThread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo",
-                "FROM (SELECT * FROM tbpost WHERE status=1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC");
+                "FROM (SELECT * FROM tbpost WHERE status=1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC"); // LEFT JOIN 没问题
         renderJson(new BaseResponse(latestThread));
     }
 

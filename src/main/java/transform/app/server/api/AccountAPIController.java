@@ -393,7 +393,7 @@ public class AccountAPIController extends BaseAPIController {
          */
         String user_id = getPara(USER_ID);
         Page<Record> fs = Db.paginate(pageNumber, pageSize,"SELECT tu.user_id, tu.user_nickname, tu.user_photo",
-                "FROM (SELECT * FROM tbuser_concern WHERE concerned_id = ?) tc LEFT JOIN tbuser tu ON tc.concern_id = tu.user_id", user_id);
+                "FROM (SELECT * FROM tbuser_concern WHERE concerned_id = ?) tc LEFT JOIN tbuser tu ON tc.concern_id = tu.user_id", user_id); // LEFT JOIN 没问题
         renderJson(new BaseResponse(fs));
     }
 
@@ -415,7 +415,7 @@ public class AccountAPIController extends BaseAPIController {
          */
         String user_id = getPara(USER_ID);
         Page<Record> cons = Db.paginate(pageNumber, pageSize,"SELECT tu.user_id, tu.user_nickname, tu.user_photo",
-                "FROM (SELECT * FROM tbuser_concern WHERE concern_id = ?) tc LEFT JOIN tbuser tu ON tc.concerned_id = tu.user_id", user_id);
+                "FROM (SELECT * FROM tbuser_concern WHERE concern_id = ?) tc LEFT JOIN tbuser tu ON tc.concerned_id = tu.user_id", user_id); // LEFT JOIN 没问题
         renderJson(new BaseResponse(cons));
     }
 
@@ -432,7 +432,7 @@ public class AccountAPIController extends BaseAPIController {
         int pageSize = getParaToInt("pageSize", defaultPageSize);
         String user_id = getPara(Post.USER_ID);
         Page<Record> latestThread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo",
-                "FROM (SELECT * FROM tbpost WHERE user_id = ?) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC", user_id);
+                "FROM (SELECT * FROM tbpost WHERE user_id = ?) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC", user_id); // LEFT JOIN 没问题
         renderJson(new BaseResponse(latestThread));
     }
 
