@@ -383,13 +383,17 @@ public class AccountAPIController extends BaseAPIController {
     @Clear
     @Before({POST.class, UserStatusInterceptor.class})
     public void fans() {
+        int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
+        int pageSize = getParaToInt("pageSize", defaultPageSize);
         /**
          concern_id 关注 concerned_id
          查找concerned_id的粉丝列表，被哪些用户所关注
-         SELECT tu.user_id, tu.user_nickname, tu.user_photo FROM (SELECT * FROM tbuser_concern WHERE concerned_id = ?) tc LEFT JOIN tbuser tu ON tc.concern_id = tu.user_id
+         SELECT tu.user_id, tu.user_nickname, tu.user_photo
+         FROM (SELECT * FROM tbuser_concern WHERE concerned_id = ?) tc LEFT JOIN tbuser tu ON tc.concern_id = tu.user_id
          */
         String user_id = getPara(USER_ID);
-        List<Record> fs = Db.find("SELECT tu.user_id, tu.user_nickname, tu.user_photo FROM (SELECT * FROM tbuser_concern WHERE concerned_id = ?) tc LEFT JOIN tbuser tu ON tc.concern_id = tu.user_id", user_id);
+        Page<Record> fs = Db.paginate(pageNumber, pageSize,"SELECT tu.user_id, tu.user_nickname, tu.user_photo",
+                "FROM (SELECT * FROM tbuser_concern WHERE concerned_id = ?) tc LEFT JOIN tbuser tu ON tc.concern_id = tu.user_id", user_id);
         renderJson(new BaseResponse(fs));
     }
 
@@ -401,13 +405,17 @@ public class AccountAPIController extends BaseAPIController {
     @Clear
     @Before({POST.class, UserStatusInterceptor.class})
     public void concerns() {
+        int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
+        int pageSize = getParaToInt("pageSize", defaultPageSize);
         /**
          concern_id 关注 concerned_id
          查找concern_id的关注列表，关注了哪些用户
-         SELECT tu.user_id, tu.user_nickname, tu.user_photo FROM (SELECT * FROM tbuser_concern WHERE concern_id = ?) tc LEFT JOIN tbuser tu ON tc.concerned_id = tu.user_id
+         SELECT tu.user_id, tu.user_nickname, tu.user_photo
+         FROM (SELECT * FROM tbuser_concern WHERE concern_id = ?) tc LEFT JOIN tbuser tu ON tc.concerned_id = tu.user_id
          */
         String user_id = getPara(USER_ID);
-        List<Record> cons = Db.find("SELECT tu.user_id, tu.user_nickname, tu.user_photo FROM (SELECT * FROM tbuser_concern WHERE concern_id = ?) tc LEFT JOIN tbuser tu ON tc.concerned_id = tu.user_id", user_id);
+        Page<Record> cons = Db.paginate(pageNumber, pageSize,"SELECT tu.user_id, tu.user_nickname, tu.user_photo",
+                "FROM (SELECT * FROM tbuser_concern WHERE concern_id = ?) tc LEFT JOIN tbuser tu ON tc.concerned_id = tu.user_id", user_id);
         renderJson(new BaseResponse(cons));
     }
 
