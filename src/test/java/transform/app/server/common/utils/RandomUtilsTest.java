@@ -1,6 +1,5 @@
 package transform.app.server.common.utils;
 
-
 import org.junit.Test;
 
 import java.math.BigInteger;

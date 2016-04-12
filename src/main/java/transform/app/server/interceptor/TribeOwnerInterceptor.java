@@ -5,7 +5,6 @@ import com.jfinal.aop.Invocation;
 import com.jfinal.core.Controller;
 import transform.app.server.common.bean.BaseResponse;
 import transform.app.server.common.bean.Code;
-import transform.app.server.common.token.TokenManager;
 import transform.app.server.common.utils.StringUtils;
 import transform.app.server.model.Tribe;
 import transform.app.server.model.User;

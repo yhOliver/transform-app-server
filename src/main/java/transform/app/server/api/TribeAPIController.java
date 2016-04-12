@@ -16,7 +16,6 @@ import transform.app.server.model.TribeMember;
 import transform.app.server.model.User;
 
 import static transform.app.server.model.Tribe.*;
-import static transform.app.server.model.User.UPDATETIME;
 
 
 /**

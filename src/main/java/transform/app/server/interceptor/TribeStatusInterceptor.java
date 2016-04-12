@@ -3,12 +3,10 @@ package transform.app.server.interceptor;
 import com.jfinal.aop.Interceptor;
 import com.jfinal.aop.Invocation;
 import com.jfinal.core.Controller;
-import com.jfinal.plugin.activerecord.Db;
 import transform.app.server.common.bean.BaseResponse;
 import transform.app.server.common.bean.Code;
 import transform.app.server.common.utils.StringUtils;
 import transform.app.server.model.Tribe;
-import transform.app.server.model.User;
 
 import static transform.app.server.model.Tribe.TRIBE_ID;
 

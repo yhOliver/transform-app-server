@@ -7,7 +7,10 @@ import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.tx.Tx;
 import transform.app.server.common.Require;
-import transform.app.server.common.bean.*;
+import transform.app.server.common.bean.BaseResponse;
+import transform.app.server.common.bean.Code;
+import transform.app.server.common.bean.Constant;
+import transform.app.server.common.bean.LoginVO;
 import transform.app.server.common.token.TokenManager;
 import transform.app.server.common.utils.DateUtils;
 import transform.app.server.common.utils.RandomUtils;
@@ -24,7 +27,6 @@ import transform.app.server.model.UserConcern;
 
 import java.sql.Timestamp;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static transform.app.server.model.RegisterCode.CODE;
