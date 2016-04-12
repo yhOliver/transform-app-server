@@ -15,6 +15,8 @@
 * 获取用户关注列表:      POST /api/account/concerns
 * 用户动态:              POST /api/account/posts
 * 关注用户/取消关注:     POST /api/account/concern
+* 修改手机号:            POST /api/account/changeMobile
+* 重置密码（忘记密码）:  POST /api/account/resetPwd
 
 ## 公共模块接口*
  

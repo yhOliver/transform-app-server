@@ -49,6 +49,9 @@ import static transform.app.server.model.UserConcern.CONCERN_ID;
  * 获取用户关注列表: POST /api/account/concerns
  * 用户动态: POST /api/account/posts
  * 关注用户（取消关注）: POST /api/account/concern
+ * <p>
+ * 修改手机号: POST /api/account/changeMobile
+ * 重置密码（忘记密码）: POST /api/account/resetPwd
  *
  * @author zhuqi259
  */
@@ -85,6 +88,7 @@ public class AccountAPIController extends BaseAPIController {
     @Before({POST.class, Tx.class})
     public void sendCode() {
         String user_mobile = getPara(USER_MOBILE);
+        int p = getParaToInt("p", 0); // 标志 [0：注册， 1：修改手机号，2：重置密码]
         if (StringUtils.isEmpty(user_mobile)) {
             renderArgumentError("user mobile can not be null");
             return;
@@ -97,8 +101,19 @@ public class AccountAPIController extends BaseAPIController {
         }
 
         //检查手机号码是否被注册
-        if (Db.findFirst("SELECT * FROM tbuser WHERE user_mobile=?", user_mobile) != null) {
-            renderJson(new BaseResponse(Code.FAILURE, "mobile already registered"));
+        Record someOne = Db.findFirst("SELECT * FROM tbuser WHERE user_mobile=?", user_mobile);
+        if (p == 0 || p == 1) { // 注册 或者 修改手机号， 当前传过来的手机号都应当未被注册
+            if (someOne != null) {
+                renderFailed("mobile already registered");
+                return;
+            }
+        } else if (p == 2) { // 重置密码时发送验证码
+            if (someOne == null) {
+                renderFailed("mobile is not registered");
+                return;
+            }
+        } else {
+            renderFailed("param p is wrong");
             return;
         }
 
@@ -188,6 +203,95 @@ public class AccountAPIController extends BaseAPIController {
         LoginVO vo = new LoginVO();
         vo.setToken(TokenManager.getMe().generateToken(nowUser));
         renderJson(new BaseResponse("register success", vo));
+    }
+
+
+    /**
+     * 修改手机号: POST /api/account/changeMobile
+     * <p>
+     * POST、登陆、事务
+     */
+    @Before(Tx.class)
+    public void changeMobile() {
+        String user_mobile = getPara(USER_MOBILE);// 新手机号
+        String code = getPara(CODE);// 手机验证码
+        String password = getPara(PWD);// 密码 (已经加密过了)，需要验证
+        //校验必填项参数
+        if (!notNull(Require.me()
+                .put(user_mobile, "user new mobile can not be null")
+                .put(code, "code can not be null")
+                .put(password, "password can not be null"))) {
+            return;
+        }
+
+        User user = getUser();
+        // 手机号不会与原来相同 【sendCode满足】
+        // 检查密码是否正确
+        if (!password.equals(user.getStr(PWD))) {
+            renderFailed("password is not right");
+            return;
+        }
+        //检查验证码是否有效
+        if (Db.findFirst("SELECT * FROM t_register_code WHERE mobile=? AND code=?", user_mobile, code) == null) {
+            renderFailed("code is invalid");
+            return;
+        }
+
+        //删除验证码记录
+        Db.update("DELETE FROM t_register_code WHERE mobile=? AND code = ?", user_mobile, code);
+
+        // 修改当前用户手机号
+        user.set(UPDATETIME, DateUtils.currentTimeStamp()); // 更新时间
+        user.set(USER_MOBILE, user_mobile);
+        boolean update = user.update();
+        renderJson(new BaseResponse().setSuccess(update ? Code.SUCCESS : Code.FAILURE)
+                .setMsg(update ? "update mobile success" : "update mobile failed"));
+    }
+
+    /**
+     * 重置密码（忘记密码）: POST /api/account/resetPwd
+     * <p>
+     * POST、登陆、事务
+     */
+    @Clear
+    @Before({POST.class, Tx.class})
+    public void resetPwd() {
+        String user_mobile = getPara(USER_MOBILE);// 手机号
+        String code = getPara(CODE);// 手机验证码
+        String password = getPara(PWD);// 新密码 (已经加密过了)
+
+        //校验必填项参数
+        if (!notNull(Require.me()
+                .put(user_mobile, "user new mobile can not be null")
+                .put(code, "code can not be null")
+                .put(password, "password can not be null"))) {
+            return;
+        }
+
+        // 根据手机号查找当前用户
+        User someOne = User.dao.findFirst("SELECT * FROM tbuser WHERE user_mobile=?", user_mobile);
+        if (someOne == null) {
+            /**
+             * @see transform.app.server.api.AccountAPIController.sendCode
+             */
+            renderFailed("mobile is not registered"); // 重复检测了一下
+            return;
+        }
+        //检查验证码是否有效
+        if (Db.findFirst("SELECT * FROM t_register_code WHERE mobile=? AND code=?", user_mobile, code) == null) {
+            renderFailed("code is invalid");
+            return;
+        }
+
+        //删除验证码记录
+        Db.update("DELETE FROM t_register_code WHERE mobile=? AND code = ?", user_mobile, code);
+
+        // 重置密码
+        someOne.set(UPDATETIME, DateUtils.currentTimeStamp()); // 更新时间
+        someOne.set(PWD, password);
+        boolean update = someOne.update();
+        renderJson(new BaseResponse().setSuccess(update ? Code.SUCCESS : Code.FAILURE)
+                .setMsg(update ? "reset password success" : "reset password failed"));
     }
 
     /**
@@ -392,7 +496,7 @@ public class AccountAPIController extends BaseAPIController {
          FROM (SELECT * FROM tbuser_concern WHERE concerned_id = ?) tc LEFT JOIN tbuser tu ON tc.concern_id = tu.user_id
          */
         String user_id = getPara(USER_ID);
-        Page<Record> fs = Db.paginate(pageNumber, pageSize,"SELECT tu.user_id, tu.user_nickname, tu.user_photo",
+        Page<Record> fs = Db.paginate(pageNumber, pageSize, "SELECT tu.user_id, tu.user_nickname, tu.user_photo",
                 "FROM (SELECT * FROM tbuser_concern WHERE concerned_id = ?) tc LEFT JOIN tbuser tu ON tc.concern_id = tu.user_id", user_id); // LEFT JOIN 没问题
         renderJson(new BaseResponse(fs));
     }
@@ -414,7 +518,7 @@ public class AccountAPIController extends BaseAPIController {
          FROM (SELECT * FROM tbuser_concern WHERE concern_id = ?) tc LEFT JOIN tbuser tu ON tc.concerned_id = tu.user_id
          */
         String user_id = getPara(USER_ID);
-        Page<Record> cons = Db.paginate(pageNumber, pageSize,"SELECT tu.user_id, tu.user_nickname, tu.user_photo",
+        Page<Record> cons = Db.paginate(pageNumber, pageSize, "SELECT tu.user_id, tu.user_nickname, tu.user_photo",
                 "FROM (SELECT * FROM tbuser_concern WHERE concern_id = ?) tc LEFT JOIN tbuser tu ON tc.concerned_id = tu.user_id", user_id); // LEFT JOIN 没问题
         renderJson(new BaseResponse(cons));
     }
