@@ -166,7 +166,7 @@ public class PostAPIController extends BaseAPIController {
          */
         Page<Record> post_replies = Db.paginate(pageNumber, pageSize, "SELECT tpr.*, tu.user_nickname, tu.user_photo, tu2.user_nickname AS reply_to_username",
                 "FROM (SELECT * FROM tbpost_reply WHERE post_id = ? AND status=1) tpr LEFT JOIN tbuser tu ON tpr.user_id = tu.user_id LEFT JOIN tbuser tu2 ON tpr.reply_to_user_id = tu2.user_id ORDER BY tpr.reply_date", post_id); // LEFT JOIN 没问题
-        renderJson(new BaseResponse(post_replies));
+        renderJson(new BaseResponse(Code.SUCCESS, "", post_replies));
     }
 
     /**
@@ -242,7 +242,7 @@ public class PostAPIController extends BaseAPIController {
         vo.setPost(post);
         vo.setZans(zans);
         vo.setReplies(post_replies);
-        renderJson(new BaseResponse(vo));
+        renderJson(new BaseResponse(Code.SUCCESS, "", vo));
     }
 
     /**
@@ -273,7 +273,7 @@ public class PostAPIController extends BaseAPIController {
              */
             Page<Record> thread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo, (CASE WHEN tz.post_id IS NULL THEN 0 ELSE 1 END) AS zan_status",
                     "FROM (SELECT * FROM tbpost WHERE tribe_id = ? AND status = 1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id LEFT JOIN (SELECT post_id, user_id FROM t_zan WHERE user_id = ?) tz ON tp.post_id = tz.post_id ORDER BY post_date DESC", tribe_id, user_id); // LEFT JOIN 没问题
-            renderJson(new BaseResponse(thread));
+            renderJson(new BaseResponse(Code.SUCCESS, "",thread));
         } else {
             /**
              SELECT tp.*, tu.user_nickname, tu.user_photo, 0 AS zan_status
@@ -281,7 +281,7 @@ public class PostAPIController extends BaseAPIController {
              */
             Page<Record> thread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo, 0 AS zan_status",
                     "FROM (SELECT * FROM tbpost WHERE tribe_id = ? AND status=1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC", tribe_id); // LEFT JOIN 没问题
-            renderJson(new BaseResponse(thread));
+            renderJson(new BaseResponse(Code.SUCCESS, "",thread));
         }
     }
 
@@ -311,15 +311,15 @@ public class PostAPIController extends BaseAPIController {
              */
             Page<Record> latestThread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo, (CASE WHEN tz.post_id IS NULL THEN 0 ELSE 1 END) AS zan_status",
                     "FROM (SELECT * FROM tbpost WHERE status = 1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id LEFT JOIN (SELECT post_id, user_id FROM t_zan WHERE user_id = ?) tz ON tp.post_id = tz.post_id ORDER BY post_date DESC", user_id); // LEFT JOIN 没问题
-            renderJson(new BaseResponse(latestThread));
-        }else{
+            renderJson(new BaseResponse(Code.SUCCESS, "",latestThread));
+        } else {
             /**
              SELECT tp.*, tu.user_nickname, tu.user_photo, 0 AS zan_status
              FROM (SELECT * FROM tbpost WHERE status = 1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC
              */
             Page<Record> latestThread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo, 0 AS zan_status",
                     "FROM (SELECT * FROM tbpost WHERE status=1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC"); // LEFT JOIN 没问题
-            renderJson(new BaseResponse(latestThread));
+            renderJson(new BaseResponse(Code.SUCCESS, "",latestThread));
         }
     }
 

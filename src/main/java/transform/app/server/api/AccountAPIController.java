@@ -204,7 +204,7 @@ public class AccountAPIController extends BaseAPIController {
         }
         LoginVO vo = new LoginVO();
         vo.setToken(TokenManager.getMe().generateToken(nowUser));
-        renderJson(new BaseResponse("register success", vo));
+        renderJson(new BaseResponse(Code.SUCCESS, "register success", vo));
     }
 
 
@@ -325,7 +325,7 @@ public class AccountAPIController extends BaseAPIController {
         vo.setInfo(userInfo);
         vo.setToken(TokenManager.getMe().generateToken(nowUser));
         vo.setConstant(Constant.me());
-        renderJson(new BaseResponse("login success", vo));
+        renderJson(new BaseResponse(Code.SUCCESS, "login success", vo));
     }
 
     /**
@@ -474,7 +474,7 @@ public class AccountAPIController extends BaseAPIController {
         User user = getAttr("user");
         String user_photo = user.getStr(USER_PHOTO);
         if (StringUtils.isNotEmpty(user_photo)) {
-            renderJson(new BaseResponse(user_photo));
+            renderJson(new BaseResponse(Code.SUCCESS, "", user_photo));
         } else {
             renderFailed("user photo is not found");
         }
@@ -504,7 +504,7 @@ public class AccountAPIController extends BaseAPIController {
         String user_id = getPara(USER_ID);
         Page<Record> fs = Db.paginate(pageNumber, pageSize, "SELECT tu.user_id, tu.user_nickname, tu.user_photo",
                 "FROM (SELECT * FROM tbuser_concern WHERE concerned_id = ?) tc LEFT JOIN tbuser tu ON tc.concern_id = tu.user_id", user_id); // LEFT JOIN 没问题
-        renderJson(new BaseResponse(fs));
+        renderJson(new BaseResponse(Code.SUCCESS, "", fs));
     }
 
     /**
@@ -530,7 +530,7 @@ public class AccountAPIController extends BaseAPIController {
         String user_id = getPara(USER_ID);
         Page<Record> cons = Db.paginate(pageNumber, pageSize, "SELECT tu.user_id, tu.user_nickname, tu.user_photo",
                 "FROM (SELECT * FROM tbuser_concern WHERE concern_id = ?) tc LEFT JOIN tbuser tu ON tc.concerned_id = tu.user_id", user_id); // LEFT JOIN 没问题
-        renderJson(new BaseResponse(cons));
+        renderJson(new BaseResponse(Code.SUCCESS, "", cons));
     }
 
 
@@ -551,7 +551,7 @@ public class AccountAPIController extends BaseAPIController {
         String user_id = getPara(Post.USER_ID);
         Page<Record> latestThread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo",
                 "FROM (SELECT * FROM tbpost WHERE user_id = ?) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC", user_id); // LEFT JOIN 没问题
-        renderJson(new BaseResponse(latestThread));
+        renderJson(new BaseResponse(Code.SUCCESS, "", latestThread));
     }
 
     /**

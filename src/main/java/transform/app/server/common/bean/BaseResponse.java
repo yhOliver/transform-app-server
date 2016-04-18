@@ -15,27 +15,14 @@ public class BaseResponse {
     public BaseResponse() {
     }
 
-    public BaseResponse(String msg) {
-        this.msg = msg;
-    }
-    
     public BaseResponse(String success, String msg) {
         this.success = success;
         this.msg = msg;
     }
 
-    public BaseResponse(String msg, Object result) {
-        this.msg = msg;
-        this.result = result;
-    }
-
     public BaseResponse(String success, String msg, Object result) {
         this.success = success;
         this.msg = msg;
-        this.result = result;
-    }
-
-    public BaseResponse(Object result) {
         this.result = result;
     }
 

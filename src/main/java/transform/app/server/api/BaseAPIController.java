@@ -80,7 +80,7 @@ public class BaseAPIController extends Controller {
         for (int i = 0, total = rules.getLength(); i < total; i++) {
             Object key = rules.get(i);
             String msg = rules.getMessage(i);
-            BaseResponse response = new BaseResponse(Code.FAILURE);
+            BaseResponse response = new BaseResponse().setSuccess(Code.FAILURE);
             if (key == null) {
                 renderJson(response.setMsg(msg));
                 return false;

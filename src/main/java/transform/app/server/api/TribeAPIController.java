@@ -70,7 +70,7 @@ public class TribeAPIController extends BaseAPIController {
                 .set(CREATETIME, DateUtils.currentTimeStamp())
                 .set(UPDATETIME, DateUtils.currentTimeStamp());
         tribe.save();
-        renderJson(new BaseResponse("create tribe success", tribe));
+        renderJson(new BaseResponse(Code.SUCCESS, "create tribe success", tribe));
     }
 
     /**
@@ -140,7 +140,7 @@ public class TribeAPIController extends BaseAPIController {
     @Before({POST.class, TribeStatusInterceptor.class})
     public void view() {
         Tribe tribe = getAttr("tribe");
-        renderJson(new BaseResponse(tribe));
+        renderJson(new BaseResponse(Code.SUCCESS, "",tribe));
     }
 
     /**
@@ -225,6 +225,6 @@ public class TribeAPIController extends BaseAPIController {
          FROM tbtribe WHERE user_id = ? OR tribe_id IN (SELECT tribe_id FROM tbtribe_member WHERE user_id = ?) ORDER BY createtime DESC
          */
         Page<Tribe> tribes = Tribe.dao.paginate(pageNumber, pageSize, "SELECT * ", "FROM tbtribe WHERE user_id = ? OR tribe_id IN (SELECT tribe_id FROM tbtribe_member WHERE user_id = ?) ORDER BY createtime DESC", user_id, user_id);
-        renderJson(new BaseResponse(tribes));
+        renderJson(new BaseResponse(Code.SUCCESS, "",tribes));
     }
 }

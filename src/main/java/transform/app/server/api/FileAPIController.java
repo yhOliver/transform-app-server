@@ -70,6 +70,6 @@ public class FileAPIController extends BaseAPIController {
             renderFailed("something is wrong");
             return;
         }
-        renderJson(new BaseResponse(urls));
+        renderJson(new BaseResponse(Code.SUCCESS, "", urls));
     }
 }

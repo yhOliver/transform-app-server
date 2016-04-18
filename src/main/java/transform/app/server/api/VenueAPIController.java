@@ -57,7 +57,7 @@ public class VenueAPIController extends BaseAPIController {
     @Before(POST.class)
     public void types() {
         List<SportType> sportTypes = SportType.dao.find("SELECT * FROM tbsport_typedic ORDER BY spty_seq DESC");
-        renderJson(new BaseResponse(sportTypes));
+        renderJson(new BaseResponse(Code.SUCCESS, "", sportTypes));
     }
 
     /**
@@ -275,7 +275,7 @@ public class VenueAPIController extends BaseAPIController {
                 venuePage = Db.paginate(pageNumber, pageSize, "SELECT dic.*, tvd.* ", sb.toString(), spty_id, venu_city, device_uuid);
             }
         }
-        renderJson(new BaseResponse(venuePage));
+        renderJson(new BaseResponse(Code.SUCCESS, "", venuePage));
     }
 
     /**
@@ -316,7 +316,7 @@ public class VenueAPIController extends BaseAPIController {
         // 按照距离排序
         // 距离表中存在的才应该显示出来~~
         Page<Record> venuePage = Db.paginate(pageNumber, pageSize, "SELECT td.dv_distance, tv.venu_id, tv.venu_name, tv.venu_address, tv.img0", "FROM (SELECT * FROM t_distance WHERE device_uuid=? ) td LEFT JOIN tbvenue tv ON td.venu_id = tv.venu_id ORDER BY td.dv_distance", device_uuid); // LEFT JOIN 没问题
-        renderJson(new BaseResponse(venuePage));
+        renderJson(new BaseResponse(Code.SUCCESS, "", venuePage));
     }
 
     /**
@@ -342,7 +342,7 @@ public class VenueAPIController extends BaseAPIController {
         vo.setVenue(venue);
         vo.setVenueSports(venueSports);
         vo.setVenueComments(venueComments);
-        renderJson(new BaseResponse(vo));
+        renderJson(new BaseResponse(Code.SUCCESS, "", vo));
     }
 
     /**
@@ -367,7 +367,7 @@ public class VenueAPIController extends BaseAPIController {
          FROM(SELECT * FROM tbvenue_comment WHERE venu_id = '124') tc LEFT JOIN tbuser tu ON tc.user_id = tu.user_id   ORDER BY  tc.createtime DESC
          */
         Page<Record> venueComments = Db.paginate(pageNumber, pageSize, "SELECT tc.*, tu.user_nickname", "FROM(SELECT * FROM tbvenue_comment WHERE venu_id=?) tc LEFT JOIN tbuser tu ON tc.user_id=tu.user_id ORDER BY tc.createtime DESC", venu_id); // LEFT JOIN 没问题
-        renderJson(new BaseResponse(venueComments));
+        renderJson(new BaseResponse(Code.SUCCESS, "", venueComments));
     }
 
     private void calcDistances(String device_uuid, double device_longitude, double device_latitude, List<Record> venues) {
