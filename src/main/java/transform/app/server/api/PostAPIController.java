@@ -10,6 +10,7 @@ import transform.app.server.common.Require;
 import transform.app.server.common.bean.BaseResponse;
 import transform.app.server.common.bean.Code;
 import transform.app.server.common.bean.PostDetailVO;
+import transform.app.server.common.token.TokenManager;
 import transform.app.server.common.utils.DateUtils;
 import transform.app.server.common.utils.FileUtils;
 import transform.app.server.common.utils.RandomUtils;
@@ -17,6 +18,7 @@ import transform.app.server.common.utils.StringUtils;
 import transform.app.server.interceptor.*;
 import transform.app.server.model.Post;
 import transform.app.server.model.PostReply;
+import transform.app.server.model.User;
 import transform.app.server.model.Zan;
 
 import static transform.app.server.model.Post.*;
@@ -252,16 +254,35 @@ public class PostAPIController extends BaseAPIController {
     @Before({POST.class, TribeStatusInterceptor.class})
     public void thread() {
         // 发帖人，头像，时间，设备，发帖内容，媒体，评论数、赞数
-        /**
-         SELECT tp.*, tu.user_nickname, tu.user_photo
-         FROM (SELECT * FROM tbpost WHERE tribe_id = ? AND status=1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC
-         */
         int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
         int pageSize = getParaToInt("pageSize", defaultPageSize);
         String tribe_id = getPara(TRIBE_ID);
-        Page<Record> thread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo",
-                "FROM (SELECT * FROM tbpost WHERE tribe_id = ? AND status=1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC", tribe_id); // LEFT JOIN 没问题
-        renderJson(new BaseResponse(thread));
+        // 登陆状态 与 非登陆状态
+        String token = getPara("token");
+        if (StringUtils.isNotEmpty(token)) {
+            // 登陆状态
+            User user = TokenManager.getMe().validate(token);
+            if (user == null) {
+                renderFailed("token is invalid");
+                return;
+            }
+            String user_id = user.userId();
+            /**
+             SELECT tp.*, tu.user_nickname, tu.user_photo, (CASE WHEN tz.post_id IS NULL THEN 0 ELSE 1 END) AS zan_status
+             FROM (SELECT * FROM tbpost WHERE tribe_id = ? AND status = 1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id LEFT JOIN (SELECT post_id, user_id FROM t_zan WHERE user_id = ?) tz ON tp.post_id = tz.post_id ORDER BY post_date DESC
+             */
+            Page<Record> thread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo, (CASE WHEN tz.post_id IS NULL THEN 0 ELSE 1 END) AS zan_status",
+                    "FROM (SELECT * FROM tbpost WHERE tribe_id = ? AND status = 1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id LEFT JOIN (SELECT post_id, user_id FROM t_zan WHERE user_id = ?) tz ON tp.post_id = tz.post_id ORDER BY post_date DESC", tribe_id, user_id); // LEFT JOIN 没问题
+            renderJson(new BaseResponse(thread));
+        } else {
+            /**
+             SELECT tp.*, tu.user_nickname, tu.user_photo, 0 AS zan_status
+             FROM (SELECT * FROM tbpost WHERE tribe_id = ? AND status=1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC
+             */
+            Page<Record> thread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo, 0 AS zan_status",
+                    "FROM (SELECT * FROM tbpost WHERE tribe_id = ? AND status=1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC", tribe_id); // LEFT JOIN 没问题
+            renderJson(new BaseResponse(thread));
+        }
     }
 
     /**
@@ -274,9 +295,32 @@ public class PostAPIController extends BaseAPIController {
     public void latest() {
         int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
         int pageSize = getParaToInt("pageSize", defaultPageSize);
-        Page<Record> latestThread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo",
-                "FROM (SELECT * FROM tbpost WHERE status=1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC"); // LEFT JOIN 没问题
-        renderJson(new BaseResponse(latestThread));
+        // 登陆状态 与 非登陆状态
+        String token = getPara("token");
+        if (StringUtils.isNotEmpty(token)) {
+            // 登陆状态
+            User user = TokenManager.getMe().validate(token);
+            if (user == null) {
+                renderFailed("token is invalid");
+                return;
+            }
+            String user_id = user.userId();
+            /**
+             SELECT tp.*, tu.user_nickname, tu.user_photo, (CASE WHEN tz.post_id IS NULL THEN 0 ELSE 1 END) AS zan_status
+             FROM (SELECT * FROM tbpost WHERE status = 1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id LEFT JOIN (SELECT post_id, user_id FROM t_zan WHERE user_id = ?) tz ON tp.post_id = tz.post_id ORDER BY post_date DESC
+             */
+            Page<Record> latestThread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo, (CASE WHEN tz.post_id IS NULL THEN 0 ELSE 1 END) AS zan_status",
+                    "FROM (SELECT * FROM tbpost WHERE status = 1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id LEFT JOIN (SELECT post_id, user_id FROM t_zan WHERE user_id = ?) tz ON tp.post_id = tz.post_id ORDER BY post_date DESC", user_id); // LEFT JOIN 没问题
+            renderJson(new BaseResponse(latestThread));
+        }else{
+            /**
+             SELECT tp.*, tu.user_nickname, tu.user_photo, 0 AS zan_status
+             FROM (SELECT * FROM tbpost WHERE status = 1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC
+             */
+            Page<Record> latestThread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo, 0 AS zan_status",
+                    "FROM (SELECT * FROM tbpost WHERE status=1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC"); // LEFT JOIN 没问题
+            renderJson(new BaseResponse(latestThread));
+        }
     }
 
     /**
@@ -312,7 +356,7 @@ public class PostAPIController extends BaseAPIController {
             return;
         }
         PostReply postReply = PostReply.dao.findFirst("SELECT * FROM tbpost_reply WHERE reply_id=? AND status=1", reply_id);
-        if(postReply == null){
+        if (postReply == null) {
             renderFailed("reply is not found");
             return;
         }

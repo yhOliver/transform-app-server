@@ -491,6 +491,10 @@ public class AccountAPIController extends BaseAPIController {
     public void fans() {
         int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
         int pageSize = getParaToInt("pageSize", defaultPageSize);
+        if (pageNumber < 1 || pageSize < 1) {
+            renderFailed("pageNumber and pageSize must more than 0");
+            return;
+        }
         /**
          concern_id 关注 concerned_id
          查找concerned_id的粉丝列表，被哪些用户所关注
@@ -513,6 +517,10 @@ public class AccountAPIController extends BaseAPIController {
     public void concerns() {
         int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
         int pageSize = getParaToInt("pageSize", defaultPageSize);
+        if (pageNumber < 1 || pageSize < 1) {
+            renderFailed("pageNumber and pageSize must more than 0");
+            return;
+        }
         /**
          concern_id 关注 concerned_id
          查找concern_id的关注列表，关注了哪些用户
@@ -536,6 +544,10 @@ public class AccountAPIController extends BaseAPIController {
     public void posts() {
         int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
         int pageSize = getParaToInt("pageSize", defaultPageSize);
+        if (pageNumber < 1 || pageSize < 1) {
+            renderFailed("pageNumber and pageSize must more than 0");
+            return;
+        }
         String user_id = getPara(Post.USER_ID);
         Page<Record> latestThread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo",
                 "FROM (SELECT * FROM tbpost WHERE user_id = ?) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC", user_id); // LEFT JOIN 没问题

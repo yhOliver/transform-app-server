@@ -43,6 +43,7 @@
 * 查看部落信息:          POST /api/tribe/view
 * 加入部落:              POST /api/tribe/join
 * 退出部落:              POST /api/tribe/leave
+* 我的部落               POST /api/tribe/mine
 
 ## 帖子相关的接口*
 

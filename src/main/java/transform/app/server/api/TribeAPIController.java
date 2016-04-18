@@ -3,6 +3,7 @@ package transform.app.server.api;
 import com.jfinal.aop.Before;
 import com.jfinal.aop.Clear;
 import com.jfinal.plugin.activerecord.Db;
+import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.tx.Tx;
 import transform.app.server.common.Require;
 import transform.app.server.common.bean.BaseResponse;
@@ -27,11 +28,14 @@ import static transform.app.server.model.Tribe.*;
  * 查看部落信息     POST /api/tribe/view
  * 加入部落         POST /api/tribe/join
  * 退出部落         POST /api/tribe/leave
+ * 我的部落         POST /api/tribe/mine
  *
  * @author zhuqi259
  */
 @Before({POST.class, TokenInterceptor.class})
 public class TribeAPIController extends BaseAPIController {
+    private static final int defaultPageNumber = 1;
+    private static final int defaultPageSize = 5;
 
     /**
      * 创建部落 => 登陆会员就可以
@@ -200,5 +204,27 @@ public class TribeAPIController extends BaseAPIController {
         } else {
             renderFailed("leave the tribe failed");
         }
+    }
+
+    /**
+     * 我的部落（我创建的与我加入的）
+     * <p>
+     * POST、登陆状态
+     */
+    public void mine() {
+        User user = getUser();
+        String user_id = user.userId();
+        int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
+        int pageSize = getParaToInt("pageSize", defaultPageSize);
+        if (pageNumber < 1 || pageSize < 1) {
+            renderFailed("pageNumber and pageSize must more than 0");
+            return;
+        }
+        /**
+         SELECT *
+         FROM tbtribe WHERE user_id = ? OR tribe_id IN (SELECT tribe_id FROM tbtribe_member WHERE user_id = ?) ORDER BY createtime DESC
+         */
+        Page<Tribe> tribes = Tribe.dao.paginate(pageNumber, pageSize, "SELECT * ", "FROM tbtribe WHERE user_id = ? OR tribe_id IN (SELECT tribe_id FROM tbtribe_member WHERE user_id = ?) ORDER BY createtime DESC", user_id, user_id);
+        renderJson(new BaseResponse(tribes));
     }
 }
