@@ -22,5 +22,7 @@ public class APIRouter extends Routes {
         add("/api/tribe", TribeAPIController.class);
         //帖子相关
         add("/api/post", PostAPIController.class);
+        //商城相关
+        add("/api/goods", GoodsAPIController.class);
     }
 }

@@ -57,6 +57,10 @@
 * 删帖:                  POST /api/post/del
 * 删回复:                POST /api/post/delReply
 
+## 商城相关接口*
+* 查看类别   POST /api/goods/categories
+
+
 ---
 #### 替换触发器
 * 发帖成功，用户状态数+1      V
