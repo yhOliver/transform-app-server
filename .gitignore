@@ -12,3 +12,5 @@ target/
 *.iml
 
 *.sql
+
+logs/

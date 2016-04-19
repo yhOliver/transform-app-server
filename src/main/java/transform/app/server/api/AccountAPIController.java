@@ -498,11 +498,11 @@ public class AccountAPIController extends BaseAPIController {
         /**
          concern_id 关注 concerned_id
          查找concerned_id的粉丝列表，被哪些用户所关注
-         SELECT tu.user_id, tu.user_nickname, tu.user_photo
+         SELECT tu.user_id, tu.user_nickname, tu.user_photo, tu.user_signature
          FROM (SELECT * FROM tbuser_concern WHERE concerned_id = ?) tc LEFT JOIN tbuser tu ON tc.concern_id = tu.user_id
          */
         String user_id = getPara(USER_ID);
-        Page<Record> fs = Db.paginate(pageNumber, pageSize, "SELECT tu.user_id, tu.user_nickname, tu.user_photo",
+        Page<Record> fs = Db.paginate(pageNumber, pageSize, "SELECT tu.user_id, tu.user_nickname, tu.user_photo, tu.user_signature",
                 "FROM (SELECT * FROM tbuser_concern WHERE concerned_id = ?) tc LEFT JOIN tbuser tu ON tc.concern_id = tu.user_id", user_id); // LEFT JOIN 没问题
         renderJson(new BaseResponse(Code.SUCCESS, "", fs));
     }
@@ -524,11 +524,11 @@ public class AccountAPIController extends BaseAPIController {
         /**
          concern_id 关注 concerned_id
          查找concern_id的关注列表，关注了哪些用户
-         SELECT tu.user_id, tu.user_nickname, tu.user_photo
+         SELECT tu.user_id, tu.user_nickname, tu.user_photo, tu.user_signature
          FROM (SELECT * FROM tbuser_concern WHERE concern_id = ?) tc LEFT JOIN tbuser tu ON tc.concerned_id = tu.user_id
          */
         String user_id = getPara(USER_ID);
-        Page<Record> cons = Db.paginate(pageNumber, pageSize, "SELECT tu.user_id, tu.user_nickname, tu.user_photo",
+        Page<Record> cons = Db.paginate(pageNumber, pageSize, "SELECT tu.user_id, tu.user_nickname, tu.user_photo, tu.user_signature",
                 "FROM (SELECT * FROM tbuser_concern WHERE concern_id = ?) tc LEFT JOIN tbuser tu ON tc.concerned_id = tu.user_id", user_id); // LEFT JOIN 没问题
         renderJson(new BaseResponse(Code.SUCCESS, "", cons));
     }
