@@ -393,7 +393,7 @@ public class AccountAPIController extends BaseAPIController {
         String user_birthday = getPara(USER_BIRTHDAY);
         if (StringUtils.isNotEmpty(user_birthday)) {
             // 生日格式 : yyyy-MM-dd
-            Timestamp birth = DateUtils.getBirthday(user_address);
+            Timestamp birth = DateUtils.getBirthday(user_birthday);
             user.set(USER_BIRTHDAY, birth);
             flag = true;
         }
