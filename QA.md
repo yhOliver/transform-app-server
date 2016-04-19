@@ -44,4 +44,4 @@ A: 只有执行某个动作时，才需要登录（已注册会员）：
    
    
 ---
-https://github.com/saoleigroup/sshe/commit/3212e16d4a6dd08e79123fe01fd63adf7d7aa711
+https://github.com/saoleigroup/sshe/commit/6c07ed5e725a646a0d7518db5a1a823f86305698
