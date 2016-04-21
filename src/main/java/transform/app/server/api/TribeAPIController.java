@@ -284,7 +284,7 @@ public class TribeAPIController extends BaseAPIController {
 
 
     /**
-     * 部落成员列表 [成员(不包括创建者)]
+     * 部落成员列表 [成员(包括创建者)]
      * <p>
      * POST
      */
@@ -300,10 +300,10 @@ public class TribeAPIController extends BaseAPIController {
         }
         /**
          SELECT tu.user_id, tu.user_nickname, tu.user_photo, tu.user_signature
-         FROM ( SELECT * FROM tbtribe_member WHERE tribe_id = ? ) tm LEFT JOIN tbuser tu ON tm.user_id = tu.user_id
+         FROM (SELECT user_id FROM tbtribe WHERE tribe_id = ? UNION SELECT user_id FROM tbtribe_member WHERE tribe_id = ?) tm LEFT JOIN tbuser tu ON tm.user_id = tu.user_id
          */
         Page<Record> tribe_members = Db.paginate(pageNumber, pageSize, "SELECT tu.user_id, tu.user_nickname, tu.user_photo, tu.user_signature",
-                "FROM ( SELECT * FROM tbtribe_member WHERE tribe_id = ? ) tm LEFT JOIN tbuser tu ON tm.user_id = tu.user_id", tribe_id);
+                "FROM (SELECT user_id FROM tbtribe WHERE tribe_id = ? UNION SELECT user_id FROM tbtribe_member WHERE tribe_id = ?) tm LEFT JOIN tbuser tu ON tm.user_id = tu.user_id", tribe_id, tribe_id);
         renderJson(new BaseResponse(Code.SUCCESS, "", tribe_members));
     }
 }
