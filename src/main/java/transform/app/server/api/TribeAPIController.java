@@ -276,9 +276,9 @@ public class TribeAPIController extends BaseAPIController {
         }
         /**
          SELECT *
-         FROM tbtribe WHERE user_id <> ? AND tribe_id NOT IN (SELECT tribe_id FROM tbtribe_member WHERE user_id = ?) ORDER BY createtime DESC
+         FROM tbtribe WHERE (user_id <> ? OR user_id IS NULL) AND tribe_id NOT IN (SELECT tribe_id FROM tbtribe_member WHERE user_id = ?) ORDER BY createtime DESC
          */
-        Page<Tribe> tribes = Tribe.dao.paginate(pageNumber, pageSize, "SELECT * ", "FROM tbtribe WHERE user_id <> ? AND tribe_id NOT IN (SELECT tribe_id FROM tbtribe_member WHERE user_id = ?) ORDER BY createtime DESC", user_id, user_id);
+        Page<Tribe> tribes = Tribe.dao.paginate(pageNumber, pageSize, "SELECT * ", "FROM tbtribe WHERE (user_id <> ? OR user_id IS NULL) AND tribe_id NOT IN (SELECT tribe_id FROM tbtribe_member WHERE user_id = ?) ORDER BY createtime DESC", user_id, user_id);
         renderJson(new BaseResponse(Code.SUCCESS, "", tribes));
     }
 
