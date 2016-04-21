@@ -161,7 +161,7 @@ public class TribeAPIController extends BaseAPIController {
              LEFT JOIN tbuser tu ON tt.user_id = tu.user_id
              */
             Record tribe = Db.findFirst("SELECT tt.*, tu.user_nickname, tu.user_photo, tu.user_signature, (CASE WHEN tt2.tribe_id IS NULL THEN 0 ELSE 1 END) AS join_status " +
-                    "FROM (SELECT * FROM tbtribe WHERE tribe_id = ?) tt LEFT JOIN (SELECT tribe_id FROM tbtribe WHERE user_id = ? OR tribe_id IN (SELECT tribe_id FROM tbtribe_member WHERE user_id = ?)) tt2 ON tt.tribe_id = tt2.tribe_id "+
+                    "FROM (SELECT * FROM tbtribe WHERE tribe_id = ?) tt LEFT JOIN (SELECT tribe_id FROM tbtribe WHERE user_id = ? OR tribe_id IN (SELECT tribe_id FROM tbtribe_member WHERE user_id = ?)) tt2 ON tt.tribe_id = tt2.tribe_id " +
                     "LEFT JOIN tbuser tu ON tt.user_id = tu.user_id", tribe_id, user_id, user_id);
             renderJson(new BaseResponse(Code.SUCCESS, "", tribe));
         } else {
@@ -299,11 +299,11 @@ public class TribeAPIController extends BaseAPIController {
             return;
         }
         /**
-         SELECT tu.user_id, tu.user_nickname, tu.user_photo, tu.user_signature
-         FROM (SELECT user_id FROM tbtribe WHERE tribe_id = ? UNION SELECT user_id FROM tbtribe_member WHERE tribe_id = ?) tm LEFT JOIN tbuser tu ON tm.user_id = tu.user_id
+         SELECT tu.user_id, tu.user_nickname, tu.user_photo, tu.user_signature, tm.owner_status
+         FROM (SELECT user_id, 1 AS owner_status FROM tbtribe WHERE tribe_id = ? UNION SELECT user_id, 0 AS owner_status FROM tbtribe_member WHERE tribe_id = ?) tm LEFT JOIN tbuser tu ON tm.user_id = tu.user_id
          */
-        Page<Record> tribe_members = Db.paginate(pageNumber, pageSize, "SELECT tu.user_id, tu.user_nickname, tu.user_photo, tu.user_signature",
-                "FROM (SELECT user_id FROM tbtribe WHERE tribe_id = ? UNION SELECT user_id FROM tbtribe_member WHERE tribe_id = ?) tm LEFT JOIN tbuser tu ON tm.user_id = tu.user_id", tribe_id, tribe_id);
+        Page<Record> tribe_members = Db.paginate(pageNumber, pageSize, "SELECT tu.user_id, tu.user_nickname, tu.user_photo, tu.user_signature, tm.owner_status",
+                "FROM (SELECT user_id, 1 AS owner_status FROM tbtribe WHERE tribe_id = ? UNION SELECT user_id, 0 AS owner_status FROM tbtribe_member WHERE tribe_id = ?) tm LEFT JOIN tbuser tu ON tm.user_id = tu.user_id", tribe_id, tribe_id);
         renderJson(new BaseResponse(Code.SUCCESS, "", tribe_members));
     }
 }
