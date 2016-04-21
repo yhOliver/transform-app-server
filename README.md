@@ -44,6 +44,8 @@
 * 加入部落:              POST /api/tribe/join
 * 退出部落:              POST /api/tribe/leave
 * 我的部落               POST /api/tribe/mine
+* 其他部落【未加入部落】    POST /api/tribe/others
+* 部落成员【不包括创建者】  POST /api/tribe/members
 
 ## 帖子相关的接口*
 

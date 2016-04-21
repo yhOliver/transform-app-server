@@ -31,6 +31,8 @@ import static transform.app.server.model.Tribe.*;
  * 加入部落         POST /api/tribe/join
  * 退出部落         POST /api/tribe/leave
  * 我的部落         POST /api/tribe/mine
+ * 其他部落         POST /api/tribe/others
+ * 部落成员         POST /api/tribe/members
  *
  * @author zhuqi259
  */
@@ -154,18 +156,20 @@ public class TribeAPIController extends BaseAPIController {
             String user_id = user.userId();
             // 登陆状态
             /**
-             SELECT tt.*, (CASE WHEN tt2.tribe_id IS NULL THEN 0 ELSE 1 END) AS join_status
+             SELECT tt.*, tu.user_nickname, tu.user_photo, tu.user_signature, (CASE WHEN tt2.tribe_id IS NULL THEN 0 ELSE 1 END) AS join_status
              FROM (SELECT * FROM tbtribe WHERE tribe_id = ?) tt LEFT JOIN (SELECT tribe_id FROM tbtribe WHERE user_id = ? OR tribe_id IN (SELECT tribe_id FROM tbtribe_member WHERE user_id = ?)) tt2 ON tt.tribe_id = tt2.tribe_id
+             LEFT JOIN tbuser tu ON tt.user_id = tu.user_id
              */
-            Record tribe = Db.findFirst("SELECT tt.*, (CASE WHEN tt2.tribe_id IS NULL THEN 0 ELSE 1 END) AS join_status " +
-                    "FROM (SELECT * FROM tbtribe WHERE tribe_id = ?) tt LEFT JOIN (SELECT tribe_id FROM tbtribe WHERE user_id = ? OR tribe_id IN (SELECT tribe_id FROM tbtribe_member WHERE user_id = ?)) tt2 ON tt.tribe_id = tt2.tribe_id", tribe_id, user_id, user_id);
+            Record tribe = Db.findFirst("SELECT tt.*, tu.user_nickname, tu.user_photo, tu.user_signature, (CASE WHEN tt2.tribe_id IS NULL THEN 0 ELSE 1 END) AS join_status " +
+                    "FROM (SELECT * FROM tbtribe WHERE tribe_id = ?) tt LEFT JOIN (SELECT tribe_id FROM tbtribe WHERE user_id = ? OR tribe_id IN (SELECT tribe_id FROM tbtribe_member WHERE user_id = ?)) tt2 ON tt.tribe_id = tt2.tribe_id "+
+                    "LEFT JOIN tbuser tu ON tt.user_id = tu.user_id", tribe_id, user_id, user_id);
             renderJson(new BaseResponse(Code.SUCCESS, "", tribe));
         } else {
             // 未登陆
             /**
-             SELECT *, 0 AS join_status FROM tbtribe WHERE tribe_id = ?
+             SELECT tt.*, tu.user_nickname, tu.user_photo, tu.user_signature, 0 AS join_status FROM (SELECT * FROM tbtribe WHERE tribe_id = ?) tt LEFT JOIN tbuser tu ON tt.user_id = tu.user_id
              */
-            Record tribe = Db.findFirst("SELECT *, 0 AS join_status FROM tbtribe WHERE tribe_id = ?", tribe_id);
+            Record tribe = Db.findFirst("SELECT tt.*, tu.user_nickname, tu.user_photo, tu.user_signature, 0 AS join_status FROM (SELECT * FROM tbtribe WHERE tribe_id = ?) tt LEFT JOIN tbuser tu ON tt.user_id = tu.user_id", tribe_id);
             renderJson(new BaseResponse(Code.SUCCESS, "", tribe));
         }
     }
@@ -253,5 +257,53 @@ public class TribeAPIController extends BaseAPIController {
          */
         Page<Tribe> tribes = Tribe.dao.paginate(pageNumber, pageSize, "SELECT * ", "FROM tbtribe WHERE user_id = ? OR tribe_id IN (SELECT tribe_id FROM tbtribe_member WHERE user_id = ?) ORDER BY createtime DESC", user_id, user_id);
         renderJson(new BaseResponse(Code.SUCCESS, "", tribes));
+    }
+
+
+    /**
+     * 其他部落 （非我创建的且未加入）
+     * <p>
+     * POST、登陆状态
+     */
+    public void others() {
+        User user = getUser();
+        String user_id = user.userId();
+        int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
+        int pageSize = getParaToInt("pageSize", defaultPageSize);
+        if (pageNumber < 1 || pageSize < 1) {
+            renderFailed("pageNumber and pageSize must more than 0");
+            return;
+        }
+        /**
+         SELECT *
+         FROM tbtribe WHERE user_id <> ? AND tribe_id NOT IN (SELECT tribe_id FROM tbtribe_member WHERE user_id = ?) ORDER BY createtime DESC
+         */
+        Page<Tribe> tribes = Tribe.dao.paginate(pageNumber, pageSize, "SELECT * ", "FROM tbtribe WHERE user_id <> ? AND tribe_id NOT IN (SELECT tribe_id FROM tbtribe_member WHERE user_id = ?) ORDER BY createtime DESC", user_id, user_id);
+        renderJson(new BaseResponse(Code.SUCCESS, "", tribes));
+    }
+
+
+    /**
+     * 部落成员列表 [成员(不包括创建者)]
+     * <p>
+     * POST
+     */
+    @Clear
+    @Before({POST.class, TribeStatusInterceptor.class})
+    public void members() {
+        String tribe_id = getPara(TRIBE_ID);
+        int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
+        int pageSize = getParaToInt("pageSize", defaultPageSize);
+        if (pageNumber < 1 || pageSize < 1) {
+            renderFailed("pageNumber and pageSize must more than 0");
+            return;
+        }
+        /**
+         SELECT tu.user_id, tu.user_nickname, tu.user_photo, tu.user_signature
+         FROM ( SELECT * FROM tbtribe_member WHERE tribe_id = ? ) tm LEFT JOIN tbuser tu ON tm.user_id = tu.user_id
+         */
+        Page<Record> tribe_members = Db.paginate(pageNumber, pageSize, "SELECT tu.user_id, tu.user_nickname, tu.user_photo, tu.user_signature",
+                "FROM ( SELECT * FROM tbtribe_member WHERE tribe_id = ? ) tm LEFT JOIN tbuser tu ON tm.user_id = tu.user_id", tribe_id);
+        renderJson(new BaseResponse(Code.SUCCESS, "", tribe_members));
     }
 }
