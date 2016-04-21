@@ -14,6 +14,6 @@
         <!--其它文件存储的相对目录-->
         <otherPath>/others</otherPath>
         <!--默认的头像路径, 与prefix值拼接后可访问-->
-        <defaultUserAvatar>/images/defaultUserAvatar.jpg</defaultUserAvatar>
+        <defaultUserAvatar>/attached/images/defaultUserAvatar.jpg</defaultUserAvatar>
     </resource>
 </root>

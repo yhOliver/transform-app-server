@@ -4,10 +4,12 @@ import com.jfinal.aop.Before;
 import com.jfinal.aop.Clear;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Page;
+import com.jfinal.plugin.activerecord.Record;
 import com.jfinal.plugin.activerecord.tx.Tx;
 import transform.app.server.common.Require;
 import transform.app.server.common.bean.BaseResponse;
 import transform.app.server.common.bean.Code;
+import transform.app.server.common.token.TokenManager;
 import transform.app.server.common.utils.DateUtils;
 import transform.app.server.common.utils.RandomUtils;
 import transform.app.server.common.utils.StringUtils;
@@ -139,8 +141,33 @@ public class TribeAPIController extends BaseAPIController {
     @Clear
     @Before({POST.class, TribeStatusInterceptor.class})
     public void view() {
-        Tribe tribe = getAttr("tribe");
-        renderJson(new BaseResponse(Code.SUCCESS, "",tribe));
+        //  Tribe tribe = getAttr("tribe");
+        String tribe_id = getPara(TRIBE_ID);
+        // 登陆状态 与 非登陆状态
+        String token = getPara("token");
+        if (StringUtils.isNotEmpty(token)) {
+            User user = TokenManager.getMe().validate(token);
+            if (user == null) {
+                renderFailed("token is invalid");
+                return;
+            }
+            String user_id = user.userId();
+            // 登陆状态
+            /**
+             SELECT tt.*, (CASE WHEN tt2.tribe_id IS NULL THEN 0 ELSE 1 END) AS join_status
+             FROM (SELECT * FROM tbtribe WHERE tribe_id = ?) tt LEFT JOIN (SELECT tribe_id FROM tbtribe WHERE user_id = ? OR tribe_id IN (SELECT tribe_id FROM tbtribe_member WHERE user_id = ?)) tt2 ON tt.tribe_id = tt2.tribe_id
+             */
+            Record tribe = Db.findFirst("SELECT tt.*, (CASE WHEN tt2.tribe_id IS NULL THEN 0 ELSE 1 END) AS join_status " +
+                    "FROM (SELECT * FROM tbtribe WHERE tribe_id = ?) tt LEFT JOIN (SELECT tribe_id FROM tbtribe WHERE user_id = ? OR tribe_id IN (SELECT tribe_id FROM tbtribe_member WHERE user_id = ?)) tt2 ON tt.tribe_id = tt2.tribe_id", tribe_id, user_id, user_id);
+            renderJson(new BaseResponse(Code.SUCCESS, "", tribe));
+        } else {
+            // 未登陆
+            /**
+             SELECT *, 0 AS join_status FROM tbtribe WHERE tribe_id = ?
+             */
+            Record tribe = Db.findFirst("SELECT *, 0 AS join_status FROM tbtribe WHERE tribe_id = ?", tribe_id);
+            renderJson(new BaseResponse(Code.SUCCESS, "", tribe));
+        }
     }
 
     /**
@@ -225,6 +252,6 @@ public class TribeAPIController extends BaseAPIController {
          FROM tbtribe WHERE user_id = ? OR tribe_id IN (SELECT tribe_id FROM tbtribe_member WHERE user_id = ?) ORDER BY createtime DESC
          */
         Page<Tribe> tribes = Tribe.dao.paginate(pageNumber, pageSize, "SELECT * ", "FROM tbtribe WHERE user_id = ? OR tribe_id IN (SELECT tribe_id FROM tbtribe_member WHERE user_id = ?) ORDER BY createtime DESC", user_id, user_id);
-        renderJson(new BaseResponse(Code.SUCCESS, "",tribes));
+        renderJson(new BaseResponse(Code.SUCCESS, "", tribes));
     }
 }

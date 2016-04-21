@@ -227,7 +227,7 @@ public class PostAPIController extends BaseAPIController {
     public void detail() {
         String post_id = getPara(Post.POST_ID);
         int pageSize = getParaToInt("pageSize", defaultPageSize);
-        Post post = getAttr("post");
+        Record post = getAttr("post");
         // 赞 (前10个赞)
         Page<Record> zans = Db.paginate(1, 10, "SELECT tu.user_id, tu.user_photo", "FROM (SELECT user_id FROM t_zan WHERE post_id = ? ORDER BY occurrence_time DESC) tz LEFT JOIN tbuser tu ON tz.user_id = tu.user_id", post_id); // LEFT JOIN 没问题
         // 评论第一页

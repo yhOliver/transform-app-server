@@ -131,6 +131,6 @@ public class AppProperty {
     }
 
     public String defaultUserAvatar() {
-        return getProperty(AppConstant.RES_DEFAULT_USER_AVATAR, "/images/defaultUserAvatar.jpg");
+        return getProperty(AppConstant.RES_DEFAULT_USER_AVATAR, "/attached/images/defaultUserAvatar.jpg");
     }
 }
