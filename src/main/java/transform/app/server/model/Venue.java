@@ -8,6 +8,7 @@ public class Venue extends Model<Venue> {
     public static String VENU_PROVINCE = "venu_province";
     public static String VENU_CITY = "venu_city";
     public static String VENU_PROPER = "venu_proper";
+    public static String ADDR_ID = "addr_id"; // 商业圈ID
     public static String VENU_ADDRESS = "venu_address";
     public static String VENU_INFO = "venu_info";
     public static String VENU_FACILITY_INFO = "venu_facility_info";

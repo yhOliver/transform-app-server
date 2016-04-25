@@ -38,6 +38,9 @@ import static transform.app.server.model.VenueComment.VECO_ID;
  * 场馆详情:         POST /api/venue/detail
  * 场馆评价更多分页: POST /api/venue/comments
  * 评价场馆:  POST /api/venue/comment
+ * <p>
+ * <p>
+ * 获取商业圈列表: POST /api/venue/address
  *
  * @author zhuqi259
  */
@@ -101,6 +104,7 @@ public class VenueAPIController extends BaseAPIController {
         }
         String venu_city = getPara(VENU_CITY, defaultCity);
         String venu_proper = getPara(VENU_PROPER);
+        String addr_id = getPara(ADDR_ID); // 商业圈ID存在则区必须存在
 
         if (StringUtils.isNotEmpty(device_longitude) && StringUtils.isNotEmpty(device_latitude)) {
             // 设备距离参数存在 => 更新距离数据
@@ -115,7 +119,12 @@ public class VenueAPIController extends BaseAPIController {
                 sb.append("SELECT venu_id, venu_longitude, venu_latitude FROM tbvenue WHERE venu_isonline=1 AND venu_city = ? AND ").append(weeks[week]).append("=1 ");
                 if (StringUtils.isNotEmpty(venu_proper)) {
                     sb.append("AND venu_proper=? ");
-                    venues = Db.find(sb.toString(), venu_city, venu_proper);
+                    if (StringUtils.isNotEmpty(addr_id)) {
+                        sb.append("AND addr_id=? ");
+                        venues = Db.find(sb.toString(), venu_city, venu_proper, addr_id);
+                    } else {
+                        venues = Db.find(sb.toString(), venu_city, venu_proper);
+                    }
                 } else {
                     venues = Db.find(sb.toString(), venu_city);
                 }
@@ -191,6 +200,9 @@ public class VenueAPIController extends BaseAPIController {
             sb.append("LEFT JOIN (SELECT tv.*, td.device_uuid, td.dv_distance FROM (SELECT * FROM tbvenue WHERE venu_isonline = 1 AND venu_city = ? AND ").append(weeks[week]).append("=1 ");
             if (StringUtils.isNotEmpty(venu_proper)) {
                 sb.append("AND venu_proper=? ");
+                if (StringUtils.isNotEmpty(addr_id)) {
+                    sb.append("AND addr_id=? ");
+                }
             }
             sb.append(") tv LEFT JOIN (SELECT venu_id, device_uuid, dv_distance FROM t_distance WHERE device_uuid = ?) td ON tv.venu_id = td.venu_id) tvd ON tvd.venu_id = tvs.venu_id ");
             sb.append("LEFT JOIN tbsport_typedic dic ON dic.spty_id = tvs.spty_id ");
@@ -199,7 +211,11 @@ public class VenueAPIController extends BaseAPIController {
             sb.append("ORDER BY tvs.spty_id, tvd.dv_distance ");
             System.out.println(sb.toString());
             if (StringUtils.isNotEmpty(venu_proper)) {
-                venuePage = Db.paginate(pageNumber, pageSize, true, "SELECT dic.*, tvd.* ", sb.toString(), venu_city, venu_proper, device_uuid);
+                if (StringUtils.isNotEmpty(addr_id)) {
+                    venuePage = Db.paginate(pageNumber, pageSize, true, "SELECT dic.*, tvd.* ", sb.toString(), venu_city, venu_proper, addr_id, device_uuid);
+                } else {
+                    venuePage = Db.paginate(pageNumber, pageSize, true, "SELECT dic.*, tvd.* ", sb.toString(), venu_city, venu_proper, device_uuid);
+                }
             } else {
                 venuePage = Db.paginate(pageNumber, pageSize, true, "SELECT dic.*, tvd.* ", sb.toString(), venu_city, device_uuid);
             }
@@ -263,6 +279,9 @@ public class VenueAPIController extends BaseAPIController {
             sb.append("LEFT JOIN (SELECT tv.*, td.device_uuid, td.dv_distance FROM (SELECT * FROM tbvenue WHERE venu_isonline = 1 AND venu_city = ? AND ").append(weeks[week]).append("=1 ");
             if (StringUtils.isNotEmpty(venu_proper)) {
                 sb.append("AND venu_proper=? ");
+                if (StringUtils.isNotEmpty(addr_id)) {
+                    sb.append("AND addr_id=? ");
+                }
             }
             sb.append(") tv LEFT JOIN (SELECT venu_id, device_uuid, dv_distance FROM t_distance WHERE device_uuid = ?) td ON tv.venu_id = td.venu_id) tvd ON tvd.venu_id = tvs.venu_id ");
             sb.append("LEFT JOIN tbsport_typedic dic ON dic.spty_id = tvs.spty_id ");
@@ -270,7 +289,11 @@ public class VenueAPIController extends BaseAPIController {
             sb.append("ORDER BY tvd.dv_distance ");
             System.out.println(sb.toString());
             if (StringUtils.isNotEmpty(venu_proper)) {
-                venuePage = Db.paginate(pageNumber, pageSize, "SELECT dic.*, tvd.* ", sb.toString(), spty_id, venu_city, venu_proper, device_uuid);
+                if (StringUtils.isNotEmpty(addr_id)) {
+                    venuePage = Db.paginate(pageNumber, pageSize, "SELECT dic.*, tvd.* ", sb.toString(), spty_id, venu_city, venu_proper, addr_id, device_uuid);
+                } else {
+                    venuePage = Db.paginate(pageNumber, pageSize, "SELECT dic.*, tvd.* ", sb.toString(), spty_id, venu_city, venu_proper, device_uuid);
+                }
             } else {
                 venuePage = Db.paginate(pageNumber, pageSize, "SELECT dic.*, tvd.* ", sb.toString(), spty_id, venu_city, device_uuid);
             }
@@ -413,6 +436,29 @@ public class VenueAPIController extends BaseAPIController {
                 .set(VenueComment.CREATETINE, DateUtils.currentTimeStamp())
                 .save();
         renderJson(new BaseResponse().setSuccess(saved ? Code.SUCCESS : Code.FAILURE).setMsg(saved ? "comment success" : "comment failed"));
+    }
+
+
+    /**
+     * 获取商业圈列表
+     */
+    @Clear
+    @Before(POST.class)
+    public void address() {
+        String province = getPara("province");
+        String city = getPara("city");
+        String proper = getPara("proper");
+
+        //校验必填项参数
+        if (!notNull(Require.me()
+                .put(province, "province can not be null")
+                .put(city, "city can not be null")
+                .put(proper, "proper can not be null"))) {
+            return;
+        }
+
+        List<Record> addresses = Db.find("SELECT addr_id, business_circle FROM tbaddress WHERE province = ? AND city = ? AND proper = ?", province, city, proper);
+        renderJson(new BaseResponse(Code.SUCCESS, "", addresses));
     }
 }
 
