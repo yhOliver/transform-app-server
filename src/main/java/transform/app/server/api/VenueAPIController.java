@@ -47,6 +47,7 @@ import static transform.app.server.model.VenueComment.VECO_ID;
 @Before({POST.class, DeviceInterceptor.class})
 public class VenueAPIController extends BaseAPIController {
     private static final String[] weeks = {"", MON, TUE, WED, THU, FRI, SAT, SUN}; // 1~7
+    private static final String defaultProvince = "吉林";
     private static final String defaultCity = "长春市";
     private static final int defaultPageNumber = 1;
     private static final int defaultPageSize = 5;
@@ -102,6 +103,7 @@ public class VenueAPIController extends BaseAPIController {
             renderFailed("pageNumber and pageSize must more than 0");
             return;
         }
+        String venu_province = getPara(VENU_PROVINCE, defaultProvince);
         String venu_city = getPara(VENU_CITY, defaultCity);
         String venu_proper = getPara(VENU_PROPER);
         String addr_id = getPara(ADDR_ID); // 商业圈ID存在则区必须存在
@@ -116,17 +118,17 @@ public class VenueAPIController extends BaseAPIController {
                 /**
                  *  更新关联的场馆距离(city范围内的均改变，省略重复计算)
                  */
-                sb.append("SELECT venu_id, venu_longitude, venu_latitude FROM tbvenue WHERE venu_isonline=1 AND venu_city = ? AND ").append(weeks[week]).append("=1 ");
+                sb.append("SELECT venu_id, venu_longitude, venu_latitude FROM tbvenue WHERE venu_isonline=1 AND venu_province = ? AND venu_city = ? AND ").append(weeks[week]).append("=1 ");
                 if (StringUtils.isNotEmpty(venu_proper)) {
                     sb.append("AND venu_proper=? ");
                     if (StringUtils.isNotEmpty(addr_id)) {
                         sb.append("AND addr_id=? ");
-                        venues = Db.find(sb.toString(), venu_city, venu_proper, addr_id);
+                        venues = Db.find(sb.toString(), venu_province, venu_city, venu_proper, addr_id);
                     } else {
-                        venues = Db.find(sb.toString(), venu_city, venu_proper);
+                        venues = Db.find(sb.toString(), venu_province, venu_city, venu_proper);
                     }
                 } else {
-                    venues = Db.find(sb.toString(), venu_city);
+                    venues = Db.find(sb.toString(), venu_province, venu_city);
                 }
                 calcDistances(device_uuid, longitude, latitude, venues);
             } catch (NumberFormatException ex) {
@@ -197,7 +199,7 @@ public class VenueAPIController extends BaseAPIController {
              ORDER BY tvs.spty_id, tvd.dv_distance
              */
             sb.append("FROM (SELECT DISTINCT spty_id, venu_id FROM tbvenue_sport WHERE vesp_isonline = 1) tvs ");
-            sb.append("LEFT JOIN (SELECT tv.*, td.device_uuid, td.dv_distance FROM (SELECT * FROM tbvenue WHERE venu_isonline = 1 AND venu_city = ? AND ").append(weeks[week]).append("=1 ");
+            sb.append("LEFT JOIN (SELECT tv.*, td.device_uuid, td.dv_distance FROM (SELECT * FROM tbvenue WHERE venu_isonline = 1 AND venu_province = ? AND venu_city = ? AND ").append(weeks[week]).append("=1 ");
             if (StringUtils.isNotEmpty(venu_proper)) {
                 sb.append("AND venu_proper=? ");
                 if (StringUtils.isNotEmpty(addr_id)) {
@@ -212,12 +214,12 @@ public class VenueAPIController extends BaseAPIController {
             System.out.println(sb.toString());
             if (StringUtils.isNotEmpty(venu_proper)) {
                 if (StringUtils.isNotEmpty(addr_id)) {
-                    venuePage = Db.paginate(pageNumber, pageSize, true, "SELECT dic.*, tvd.* ", sb.toString(), venu_city, venu_proper, addr_id, device_uuid);
+                    venuePage = Db.paginate(pageNumber, pageSize, true, "SELECT dic.*, tvd.* ", sb.toString(), venu_province, venu_city, venu_proper, addr_id, device_uuid);
                 } else {
-                    venuePage = Db.paginate(pageNumber, pageSize, true, "SELECT dic.*, tvd.* ", sb.toString(), venu_city, venu_proper, device_uuid);
+                    venuePage = Db.paginate(pageNumber, pageSize, true, "SELECT dic.*, tvd.* ", sb.toString(), venu_province, venu_city, venu_proper, device_uuid);
                 }
             } else {
-                venuePage = Db.paginate(pageNumber, pageSize, true, "SELECT dic.*, tvd.* ", sb.toString(), venu_city, device_uuid);
+                venuePage = Db.paginate(pageNumber, pageSize, true, "SELECT dic.*, tvd.* ", sb.toString(), venu_province, venu_city, device_uuid);
             }
         } else {
             // 查看单分组
@@ -276,7 +278,7 @@ public class VenueAPIController extends BaseAPIController {
              ORDER BY tvd.dv_distance
              */
             sb.append("FROM (SELECT DISTINCT venu_id, spty_id FROM tbvenue_sport WHERE vesp_isonline = 1 AND spty_id = ?) tvs ");
-            sb.append("LEFT JOIN (SELECT tv.*, td.device_uuid, td.dv_distance FROM (SELECT * FROM tbvenue WHERE venu_isonline = 1 AND venu_city = ? AND ").append(weeks[week]).append("=1 ");
+            sb.append("LEFT JOIN (SELECT tv.*, td.device_uuid, td.dv_distance FROM (SELECT * FROM tbvenue WHERE venu_isonline = 1 AND venu_province = ? AND venu_city = ? AND ").append(weeks[week]).append("=1 ");
             if (StringUtils.isNotEmpty(venu_proper)) {
                 sb.append("AND venu_proper=? ");
                 if (StringUtils.isNotEmpty(addr_id)) {
@@ -290,12 +292,12 @@ public class VenueAPIController extends BaseAPIController {
             System.out.println(sb.toString());
             if (StringUtils.isNotEmpty(venu_proper)) {
                 if (StringUtils.isNotEmpty(addr_id)) {
-                    venuePage = Db.paginate(pageNumber, pageSize, "SELECT dic.*, tvd.* ", sb.toString(), spty_id, venu_city, venu_proper, addr_id, device_uuid);
+                    venuePage = Db.paginate(pageNumber, pageSize, "SELECT dic.*, tvd.* ", sb.toString(), spty_id, venu_province, venu_city, venu_proper, addr_id, device_uuid);
                 } else {
-                    venuePage = Db.paginate(pageNumber, pageSize, "SELECT dic.*, tvd.* ", sb.toString(), spty_id, venu_city, venu_proper, device_uuid);
+                    venuePage = Db.paginate(pageNumber, pageSize, "SELECT dic.*, tvd.* ", sb.toString(), spty_id, venu_province, venu_city, venu_proper, device_uuid);
                 }
             } else {
-                venuePage = Db.paginate(pageNumber, pageSize, "SELECT dic.*, tvd.* ", sb.toString(), spty_id, venu_city, device_uuid);
+                venuePage = Db.paginate(pageNumber, pageSize, "SELECT dic.*, tvd.* ", sb.toString(), spty_id, venu_province, venu_city, device_uuid);
             }
         }
         renderJson(new BaseResponse(Code.SUCCESS, "", venuePage));
@@ -319,6 +321,8 @@ public class VenueAPIController extends BaseAPIController {
             renderFailed("pageNumber and pageSize must more than 0");
             return;
         }
+        String venu_province = getPara(VENU_PROVINCE, defaultProvince);
+        String venu_city = getPara(VENU_CITY, defaultCity);
         String wd = getPara("wd");
         if (!notNull(Require.me().put(wd, "search word can not be null"))) {
             return;
@@ -329,7 +333,7 @@ public class VenueAPIController extends BaseAPIController {
             try {
                 Double longitude = Double.parseDouble(device_longitude);
                 Double latitude = Double.parseDouble(device_latitude);
-                List<Record> venues = Db.find("SELECT venu_id, venu_longitude, venu_latitude FROM tbvenue WHERE venu_isonline=1 AND venu_name LIKE ? OR venu_address LIKE ?", wd, wd);
+                List<Record> venues = Db.find("SELECT venu_id, venu_longitude, venu_latitude FROM tbvenue WHERE venu_isonline=1 AND venu_province = ? AND venu_city = ? AND (venu_name LIKE ? OR venu_address LIKE ?)", venu_province, venu_city, wd, wd);
                 calcDistances(device_uuid, longitude, latitude, venues);
             } catch (NumberFormatException ex) {
                 renderFailed("device longitude and latitude must be String and double_parseable");
