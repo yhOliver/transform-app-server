@@ -336,12 +336,31 @@ public class AccountAPIController extends BaseAPIController {
     @Clear
     @Before({POST.class, UserStatusInterceptor.class})
     public void view() {
-        User user = getAttr("user");
-        BaseResponse response = new BaseResponse();
-        HashMap<String, Object> map = new HashMap<>(user.getAttrs());
-        map.remove(PWD);
-        response.setResult(map);
-        renderJson(response);
+        //  User user = getAttr("user");
+        String user_id = getPara(USER_ID); // 用户ID - 查看此用户的详情
+        // 登陆状态 与 非登陆状态
+        String token = getPara("token");
+        if (StringUtils.isNotEmpty(token)) {
+            User user = TokenManager.getMe().validate(token);
+            if (user == null) {
+                renderFailed("token is invalid");
+                return;
+            }
+            String concern_id = user.userId(); // 当前登录用户，判断其是否关注了上面的用户
+            // 登陆状态
+            /**
+             * SELECT tu.user_id, tu.user_nickname, tu.user_mobile, tu.user_address, tu.user_photo, tu.num_of_care, tu.num_of_fans, tu.num_of_status, tu.user_birthday, tu.user_sex, tu.user_height, tu.user_weight, tu.user_signature, (CASE WHEN tuc.id IS NULL THEN 0 ELSE 1 END) AS concern_status FROM (SELECT * FROM tbuser WHERE user_id = ?) tu LEFT JOIN (SELECT * FROM tbuser_concern WHERE concern_id = ?) tuc ON tu.user_id = tuc.concerned_id
+             */
+            Record record = Db.findFirst("SELECT tu.user_id, tu.user_nickname, tu.user_mobile, tu.user_address, tu.user_photo, tu.num_of_care, tu.num_of_fans, tu.num_of_status, tu.user_birthday, tu.user_sex, tu.user_height, tu.user_weight, tu.user_signature, (CASE WHEN tuc.id IS NULL THEN 0 ELSE 1 END) AS concern_status FROM (SELECT * FROM tbuser WHERE user_id = ?) tu LEFT JOIN (SELECT * FROM tbuser_concern WHERE concern_id = ?) tuc ON tu.user_id = tuc.concerned_id", user_id, concern_id);
+            renderJson(new BaseResponse(Code.SUCCESS, "", record));
+        } else {
+            // 未登陆
+            /**
+             * SELECT user_id, user_nickname, user_mobile, user_address, user_photo, num_of_care, num_of_fans, num_of_status, user_birthday, user_sex, user_height, user_weight, user_signature, 0 AS concern_status FROM tbuser WHERE user_id = ?
+             */
+            Record record = Db.findFirst("SELECT user_id, user_nickname, user_mobile, user_address, user_photo, num_of_care, num_of_fans, num_of_status, user_birthday, user_sex, user_height, user_weight, user_signature, 0 AS concern_status FROM tbuser WHERE user_id = ?", user_id);
+            renderJson(new BaseResponse(Code.SUCCESS, "", record));
+        }
     }
 
     /**
