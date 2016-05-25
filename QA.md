@@ -45,3 +45,15 @@ A: 只有执行某个动作时，才需要登录（已注册会员）：
    
 ---
 https://github.com/saoleigroup/sshe/commit/6c07ed5e725a646a0d7518db5a1a823f86305698
+
+
+1. ShareSDK
+2. 商城API
+商品分类
+分类下商品列表
+商品详情
+3. 我的
+我的预约
+我的订单
+我的收货地址
+4. 支付

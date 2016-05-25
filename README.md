@@ -84,3 +84,12 @@ LEFT JOIN  左关联检查         V
 
 ---
 修改git服务器地址
+
+## 收获地址相关接口*
+
+* 我的收货地址 POST /api/consignee/mine            V
+* 查看收货地址 POST /api/consignee/view
+* 增加收货地址 POST /api/consignee/add
+* 删除收货地址 POST /api/consignee/del
+* 修改收货地址 POST /api/consignee/update
+* 设置默认收货地址 POST /api/consignee/default
