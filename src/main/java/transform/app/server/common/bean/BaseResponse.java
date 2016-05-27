@@ -1,6 +1,8 @@
 package transform.app.server.common.bean;
 
 /**
+ * 返回对象
+ *
  * @author zhuqi259
  *         2016-03-23
  */

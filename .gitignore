@@ -14,3 +14,5 @@ target/
 *.sql
 
 logs/
+
+*.bat
