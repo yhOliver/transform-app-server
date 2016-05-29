@@ -46,7 +46,7 @@ import static transform.app.server.model.PostReply.*;
 @Before({POST.class, TokenInterceptor.class})
 public class PostAPIController extends BaseAPIController {
     private static final String MEDIA_SPLIT = ",";
-    private static final String CONTENT_SPLIT = "|";
+    private static final String CONTENT_SPLIT = "\\|";
     private static final int defaultPageNumber = 1;
     private static final int defaultPageSize = 5;
 
