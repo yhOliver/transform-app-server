@@ -45,6 +45,8 @@ import static transform.app.server.model.PostReply.*;
  */
 @Before({POST.class, TokenInterceptor.class})
 public class PostAPIController extends BaseAPIController {
+    private static final String MEDIA_SPLIT = ",";
+    private static final String CONTENT_SPLIT = "|";
     private static final int defaultPageNumber = 1;
     private static final int defaultPageSize = 5;
 
@@ -65,7 +67,9 @@ public class PostAPIController extends BaseAPIController {
         }
         String post_content = getPara(POST_CONTENT, "");
         // 上传文件，调用文件上传接口 (已经上传完毕)
-        String[] urls = getParaValues("urls");
+        // 修改 2016-05-29 by zhuqi259
+        String urls = getPara("urls");
+        //     String[] urls = getParaValues("urls");
         String user_id = getUser().userId();
         String tribe_id = getPara(TRIBE_ID);
         String post_id = RandomUtils.randomCustomUUID();
@@ -79,9 +83,9 @@ public class PostAPIController extends BaseAPIController {
                 .set(NUM_OF_REPLY, 0)
                 .set(NUM_OF_ZAN, 0)
                 .set(Post.STATUS, 1);
-        if (urls != null) {
-            String media_urls = StringUtils.join(urls);
-            post.set(MEDIA_URLS, media_urls);
+        if (StringUtils.isNotEmpty(urls)) {
+            //   String media_urls = StringUtils.join(urls);
+            post.set(MEDIA_URLS, urls);
         } else if ("".equals(post_content)) {
             // urls == null && post_content为空，即帖子没有任何内容~~
             renderFailed("post must have something");
@@ -94,9 +98,19 @@ public class PostAPIController extends BaseAPIController {
             renderSuccess("post save success");
         } else {
             // 删除上传文件
-            if (urls != null) {
-                for (String fileRelativePath : urls) {
-                    FileUtils.delFileRelative(fileRelativePath);
+            if (StringUtils.isNotEmpty(urls)) {
+                // modified by zhuqi259 @ 2016-05-29
+                //  0|path1|path2;0|path3|path4;1|path5|path6;0|path7|path8
+                String[] customFiles = urls.split(MEDIA_SPLIT);
+                for (String customFile : customFiles) {
+                    String[] data = customFile.split(CONTENT_SPLIT);
+                    if (data.length < 3) {  // 0|path1|path2
+                        renderFailed("post save failed");
+                        return;
+                    } else {
+                        FileUtils.delFileRelative(data[1]);
+                        FileUtils.delFileRelative(data[2]);
+                    }
                 }
             }
             renderFailed("post save failed");
@@ -273,7 +287,7 @@ public class PostAPIController extends BaseAPIController {
              */
             Page<Record> thread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo, (CASE WHEN tz.post_id IS NULL THEN 0 ELSE 1 END) AS zan_status",
                     "FROM (SELECT * FROM tbpost WHERE tribe_id = ? AND status = 1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id LEFT JOIN (SELECT post_id, user_id FROM t_zan WHERE user_id = ?) tz ON tp.post_id = tz.post_id ORDER BY post_date DESC", tribe_id, user_id); // LEFT JOIN 没问题
-            renderJson(new BaseResponse(Code.SUCCESS, "",thread));
+            renderJson(new BaseResponse(Code.SUCCESS, "", thread));
         } else {
             /**
              SELECT tp.*, tu.user_nickname, tu.user_photo, 0 AS zan_status
@@ -281,7 +295,7 @@ public class PostAPIController extends BaseAPIController {
              */
             Page<Record> thread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo, 0 AS zan_status",
                     "FROM (SELECT * FROM tbpost WHERE tribe_id = ? AND status=1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC", tribe_id); // LEFT JOIN 没问题
-            renderJson(new BaseResponse(Code.SUCCESS, "",thread));
+            renderJson(new BaseResponse(Code.SUCCESS, "", thread));
         }
     }
 
@@ -311,7 +325,7 @@ public class PostAPIController extends BaseAPIController {
              */
             Page<Record> latestThread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo, (CASE WHEN tz.post_id IS NULL THEN 0 ELSE 1 END) AS zan_status",
                     "FROM (SELECT * FROM tbpost WHERE status = 1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id LEFT JOIN (SELECT post_id, user_id FROM t_zan WHERE user_id = ?) tz ON tp.post_id = tz.post_id ORDER BY post_date DESC", user_id); // LEFT JOIN 没问题
-            renderJson(new BaseResponse(Code.SUCCESS, "",latestThread));
+            renderJson(new BaseResponse(Code.SUCCESS, "", latestThread));
         } else {
             /**
              SELECT tp.*, tu.user_nickname, tu.user_photo, 0 AS zan_status
@@ -319,7 +333,7 @@ public class PostAPIController extends BaseAPIController {
              */
             Page<Record> latestThread = Db.paginate(pageNumber, pageSize, "SELECT tp.*, tu.user_nickname, tu.user_photo, 0 AS zan_status",
                     "FROM (SELECT * FROM tbpost WHERE status=1) tp LEFT JOIN tbuser tu ON tp.user_id = tu.user_id ORDER BY post_date DESC"); // LEFT JOIN 没问题
-            renderJson(new BaseResponse(Code.SUCCESS, "",latestThread));
+            renderJson(new BaseResponse(Code.SUCCESS, "", latestThread));
         }
     }
 
