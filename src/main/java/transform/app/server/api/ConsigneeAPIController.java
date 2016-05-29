@@ -14,17 +14,13 @@ import transform.app.server.interceptor.ConsigneeOwnerInterceptor;
 import transform.app.server.interceptor.POST;
 import transform.app.server.interceptor.TokenInterceptor;
 import transform.app.server.model.ConsigneeAddress;
-import transform.app.server.model.GoodsCategory;
 import transform.app.server.model.User;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.sun.scenario.Settings.set;
 import static transform.app.server.model.ConsigneeAddress.*;
-import static transform.app.server.model.ConsigneeAddress.CONSIGNEE_TEL;
-import static transform.app.server.model.GoodsCategory.FATHER_ID;
 
 /**
  * 收货地址相关接口
