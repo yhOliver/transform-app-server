@@ -92,4 +92,4 @@ LEFT JOIN  左关联检查         V
 * 增加收货地址 POST /api/consignee/add                    V
 * 删除收货地址 POST /api/consignee/del                    V
 * 修改收货地址 POST /api/consignee/update                 V
-* 设置默认收货地址 POST /api/consignee/defaultAddress     V
+* 设置默认收货地址 POST /api/consignee/defaultAddress      V
