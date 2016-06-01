@@ -18,10 +18,10 @@ import static transform.app.server.model.GoodsCategory.FATHER_ID;
 /**
  * 商城相关接口
  * <p>
- * 查看类别   POST /api/goods/categories
+ * 查看类别          POST /api/goods/categories
+ * 查看商品列表       POST /api/goods/list
+ * 查看商品详细信息   POST /api/goods/view
  *
- * 查看商品列表 POST /api/goods/list
- * 查看商品详细信息 POST /api/goods/view
  * @author zhuqi259
  */
 @Before(POST.class)
@@ -47,26 +47,24 @@ public class GoodsAPIController extends BaseAPIController {
     /**
      * 查看商品列表 POST /api/goods/list
      */
-    public void list(){
+    public void list() {
         String cata_parent_id = getPara(CATA_PARENT_ID);
+        if (StringUtils.isEmpty(cata_parent_id)) {
+            renderFailed("cata_parent_id 不能为空");
+            return;
+        }
         /**
-         * select goods_id, goods_name,goods_price,goods_gallery FROM tbgoods where cata_parent_id='1'
+         * SELECT goods_id, goods_name, goods_price, goods_gallery FROM tbgoods WHERE cata_parent_id=?
          */
-        List<Record> goods = Db.find("SELECT goods_id, goods_name,goods_price,goods_gallery FROM tbgoods WHERE cata_parent_id=? ",cata_parent_id);
+        List<Record> goods = Db.find("SELECT goods_id, goods_name, goods_price, goods_gallery FROM tbgoods WHERE cata_parent_id=?", cata_parent_id);
         renderJson(new BaseResponse(Code.SUCCESS, "", goods));
-
-
     }
+
     /**
      * 查看商品详细信息 POST /api/goods/view
      */
-    public void view(){
+    public void view() {
         String goods_id = getPara(GOODS_ID);
-        List<Record> detailedInfo =Db.find("");
-
-
+        List<Record> detailedInfo = Db.find("");
     }
-
-
-
 }

@@ -60,8 +60,8 @@
 * 删回复:                POST /api/post/delReply
 
 ## 商城相关接口*
-* 查看类别   POST /api/goods/categories
-
+* 查看类别          POST /api/goods/categories
+* 查看商品列表       POST /api/goods/list
 
 ---
 #### 替换触发器

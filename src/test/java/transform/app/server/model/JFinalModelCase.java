@@ -62,6 +62,7 @@ public class JFinalModelCase {
         arp.addMapping("tbuser_concern", UserConcern.ID, UserConcern.class);//用户-关注表
         arp.addMapping("tbgoods_catagory", GoodsCategory.CATA_ID, GoodsCategory.class); // 商品类别表
         arp.addMapping("tbconsignee_address", ConsigneeAddress.CONSIGNEE_ID, ConsigneeAddress.class); // 收货地址表
+        arp.addMapping("tbgoods", Goods.GOODS_ID, Goods.class); //商品表
 
         arp.start();
     }
