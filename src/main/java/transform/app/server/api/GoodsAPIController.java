@@ -1,6 +1,8 @@
 package transform.app.server.api;
 
 import com.jfinal.aop.Before;
+import com.jfinal.plugin.activerecord.Db;
+import com.jfinal.plugin.activerecord.Record;
 import transform.app.server.common.bean.BaseResponse;
 import transform.app.server.common.bean.Code;
 import transform.app.server.common.utils.StringUtils;
@@ -9,6 +11,8 @@ import transform.app.server.model.GoodsCategory;
 
 import java.util.List;
 
+import static transform.app.server.model.Goods.CATA_PARENT_ID;
+import static transform.app.server.model.Goods.GOODS_ID;
 import static transform.app.server.model.GoodsCategory.FATHER_ID;
 
 /**
@@ -16,6 +20,8 @@ import static transform.app.server.model.GoodsCategory.FATHER_ID;
  * <p>
  * 查看类别   POST /api/goods/categories
  *
+ * 查看商品列表 POST /api/goods/list
+ * 查看商品详细信息 POST /api/goods/view
  * @author zhuqi259
  */
 @Before(POST.class)
@@ -36,4 +42,31 @@ public class GoodsAPIController extends BaseAPIController {
             renderJson(new BaseResponse(Code.SUCCESS, "", goodsCategories));
         }
     }
+
+
+    /**
+     * 查看商品列表 POST /api/goods/list
+     */
+    public void list(){
+        String cata_parent_id = getPara(CATA_PARENT_ID);
+        /**
+         * select goods_id, goods_name,goods_price,goods_gallery FROM tbgoods where cata_parent_id='1'
+         */
+        List<Record> goods = Db.find("SELECT goods_id, goods_name,goods_price,goods_gallery FROM tbgoods WHERE cata_parent_id=? ",cata_parent_id);
+        renderJson(new BaseResponse(Code.SUCCESS, "", goods));
+
+
+    }
+    /**
+     * 查看商品详细信息 POST /api/goods/view
+     */
+    public void view(){
+        String goods_id = getPara(GOODS_ID);
+        List<Record> detailedInfo =Db.find("");
+
+
+    }
+
+
+
 }
