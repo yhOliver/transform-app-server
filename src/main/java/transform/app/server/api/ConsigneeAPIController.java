@@ -91,7 +91,6 @@ public class ConsigneeAPIController extends BaseAPIController {
         //校验必填项参数
         if (!notNull(Require.me()
                 .put(address, "conignee address can not be null")
-                .put(zipcode, "zipcode can not be null")
                 .put(consignee_name, "consignee name can not be null")
                 .put(consignee_tel, "consignee tel can not be null"))) {
             return;

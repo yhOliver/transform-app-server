@@ -5,10 +5,13 @@ import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import transform.app.server.common.bean.BaseResponse;
 import transform.app.server.common.bean.Code;
+import transform.app.server.common.bean.GoodsAttrVO;
+import transform.app.server.common.bean.GoodsDetailVO;
 import transform.app.server.common.utils.StringUtils;
 import transform.app.server.interceptor.POST;
 import transform.app.server.model.GoodsCategory;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static transform.app.server.model.Goods.CATA_PARENT_ID;
@@ -65,6 +68,26 @@ public class GoodsAPIController extends BaseAPIController {
      */
     public void view() {
         String goods_id = getPara(GOODS_ID);
-        List<Record> detailedInfo = Db.find("");
+        Record detailedInfo = Db.findFirst("SELECT tbgoods.goods_name,tbgoods.goods_brand,tbgoods.goods_price,tbgoods.goods_gallery,tbgoods_catagory.cata_name FROM tbgoods LEFT JOIN tbgoods_catagory ON tbgoods.cata_id=tbgoods_catagory.cata_id WHERE tbgoods.goods_id=?", goods_id);
+        GoodsDetailVO vo = new GoodsDetailVO();
+        vo.setDetailedInfo(detailedInfo);
+
+        List<Record> attr_key_ids = Db.find("SELECT tbgoods_attr_key.attr_key_id, tbgoods_attr_key.attr_key_name FROM tbgoods_attr_key LEFT JOIN tbgoods ON tbgoods.goods_id=tbgoods_attr_key.goods_id WHERE tbgoods.goods_id=?", goods_id);
+        List<GoodsAttrVO> attrs = new ArrayList<>();
+        for(Record attr_key_id : attr_key_ids){
+            GoodsAttrVO a = new GoodsAttrVO();
+            a.setKey(attr_key_id.getStr("attr_key_name"));
+            List<Record> values = Db.find("SELECT tbgoods_attr_value.attr_value_name FROM tbgoods_attr_value LEFT JOIN tbgoods_attr_key ON tbgoods_attr_key.attr_key_id=tbgoods_attr_value.attr_key_id WHERE tbgoods_attr_key.attr_key_id=?", attr_key_id.getStr("attr_key_id"));
+            List<String> v = new ArrayList<>();
+            for(Record value: values){
+                v.add(value.getStr("attr_value_name"));
+            }
+            a.setValue(v);
+            attrs.add(a);
+        }
+        vo.setAttr(attrs);
+
+        renderJson(new BaseResponse(Code.SUCCESS, "", vo));
+
     }
 }
