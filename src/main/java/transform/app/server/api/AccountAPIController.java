@@ -54,6 +54,8 @@ import static transform.app.server.model.UserConcern.CONCERN_ID;
  * <p>
  * 修改手机号: POST /api/account/changeMobile
  * 重置密码（忘记密码）: POST /api/account/resetPwd
+ * <p>
+ * 我的预约: POST /api/account/reservations
  *
  * @author zhuqi259
  */
@@ -638,6 +640,29 @@ public class AccountAPIController extends BaseAPIController {
                 renderFailed("you have not concerned this one, no need to unconcern");
             }
         }
+    }
+
+    /**
+     * 我的预约: POST /api/account/reservations
+     * <p>
+     * POST、登陆状态
+     */
+    public void reservations() {
+        User user = getAttr("user");
+        String user_id = user.userId();
+        int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
+        int pageSize = getParaToInt("pageSize", defaultPageSize);
+        if (pageNumber < 1 || pageSize < 1) {
+            renderFailed("pageNumber and pageSize must more than 0");
+            return;
+        }
+        /**
+         * SELECT *
+         * FROM venue_subscribe WHERE user_id = ? ORDER BY createtime DESC
+         */
+        Page<Record> result = Db.paginate(pageNumber, pageSize, "SELECT *",
+                "FROM venue_subscribe WHERE user_id = ? ORDER BY createtime DESC", user_id);
+        renderJson(new BaseResponse(Code.SUCCESS, "", result));
     }
 }
 
