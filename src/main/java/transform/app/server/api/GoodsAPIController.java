@@ -1,14 +1,18 @@
 package transform.app.server.api;
 
 import com.jfinal.aop.Before;
+import com.jfinal.aop.Clear;
 import com.jfinal.plugin.activerecord.Db;
+import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
 import transform.app.server.common.bean.BaseResponse;
 import transform.app.server.common.bean.Code;
 import transform.app.server.common.bean.GoodsAttrVO;
 import transform.app.server.common.bean.GoodsDetailVO;
 import transform.app.server.common.utils.StringUtils;
+import transform.app.server.interceptor.GoodsStatusInterceptor;
 import transform.app.server.interceptor.POST;
+import transform.app.server.model.Goods;
 import transform.app.server.model.GoodsCategory;
 
 import java.util.ArrayList;
@@ -21,14 +25,17 @@ import static transform.app.server.model.GoodsCategory.FATHER_ID;
 /**
  * 商城相关接口
  * <p>
- * 查看类别          POST /api/goods/categories
+ * 查看类别           POST /api/goods/categories
  * 查看商品列表       POST /api/goods/list
  * 查看商品详细信息   POST /api/goods/view
+ * 查看商品评价      POST /api/goods/comments
  *
  * @author zhuqi259
  */
 @Before(POST.class)
 public class GoodsAPIController extends BaseAPIController {
+    private static final int defaultPageNumber = 1;
+    private static final int defaultPageSize = 5;
 
     /**
      * 查看类别
@@ -74,12 +81,12 @@ public class GoodsAPIController extends BaseAPIController {
 
         List<Record> attr_key_ids = Db.find("SELECT tbgoods_attr_key.attr_key_id, tbgoods_attr_key.attr_key_name FROM tbgoods_attr_key LEFT JOIN tbgoods ON tbgoods.goods_id=tbgoods_attr_key.goods_id WHERE tbgoods.goods_id=?", goods_id);
         List<GoodsAttrVO> attrs = new ArrayList<>();
-        for(Record attr_key_id : attr_key_ids){
+        for (Record attr_key_id : attr_key_ids) {
             GoodsAttrVO a = new GoodsAttrVO();
             a.setKey(attr_key_id.getStr("attr_key_name"));
             List<Record> values = Db.find("SELECT tbgoods_attr_value.attr_value_name FROM tbgoods_attr_value LEFT JOIN tbgoods_attr_key ON tbgoods_attr_key.attr_key_id=tbgoods_attr_value.attr_key_id WHERE tbgoods_attr_key.attr_key_id=?", attr_key_id.getStr("attr_key_id"));
             List<String> v = new ArrayList<>();
-            for(Record value: values){
+            for (Record value : values) {
                 v.add(value.getStr("attr_value_name"));
             }
             a.setValue(v);
@@ -89,5 +96,29 @@ public class GoodsAPIController extends BaseAPIController {
 
         renderJson(new BaseResponse(Code.SUCCESS, "", vo));
 
+    }
+
+
+    /**
+     * 查看商品评价      POST /api/goods/comments
+     */
+    @Clear
+    @Before({POST.class, GoodsStatusInterceptor.class})
+    public void comments() {
+        int pageNumber = getParaToInt("pageNumber", defaultPageNumber);//页数从1开始
+        int pageSize = getParaToInt("pageSize", defaultPageSize);
+        if (pageNumber < 1 || pageSize < 1) {
+            renderFailed("pageNumber and pageSize must more than 0");
+            return;
+        }
+        Goods goods = getAttr("goods");
+        String goods_id = goods.getStr(Goods.GOODS_ID);
+        /**
+         * SELECT tbgoods_comment.user_id, tbgoods_comment.comment, tbgoods_comment.createtime
+         * FROM tbgoods_comment WHERE tbgoods_comment.goods_id = '1' ORDER BY tbgoods_comment.createtime
+         */
+        Page<Record> goodsComment = Db.paginate(pageNumber, pageSize, "SELECT tbgoods_comment.user_id, tbgoods_comment.comment, tbgoods_comment.createtime",
+                "FROM tbgoods_comment WHERE tbgoods_comment.goods_id = ? ORDER BY tbgoods_comment.createtime", goods_id);
+        renderJson(new BaseResponse(Code.SUCCESS, "", goodsComment));
     }
 }

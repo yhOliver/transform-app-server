@@ -62,6 +62,8 @@
 ## 商城相关接口*
 * 查看类别          POST /api/goods/categories
 * 查看商品列表       POST /api/goods/list
+* 查看商品详细信息   POST /api/goods/view
+* 查看商品评价       POST /api/goods/comments
 
 ---
 #### 替换触发器

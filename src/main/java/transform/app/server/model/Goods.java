@@ -18,7 +18,7 @@ public class Goods extends Model<Goods> {
     public static String GOODS_DECRIBE_FILE = "goods_decribe_file";
     public static String GOODS_GALLERY = "goods_gallery";
     public static String CREATE_TIME = "create_time";
-
+    public static String GOODS_ISONSALE ="goods_isonsale";
 
     public static final Goods dao = new Goods();
 
