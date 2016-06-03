@@ -1,5 +1,7 @@
 package transform.app.server.common.utils;
 
+import org.joda.time.DateTime;
+
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -107,5 +109,16 @@ public final class DateUtils {
         }
 
         return sdf.format(calendar.getTime());
+    }
+
+    /**
+     * 获取一个月后的时间
+     * 时间字符格式为：yyyy-MM-dd HH:mm:ss
+     *
+     * @return 时间字符串
+     */
+    public static Timestamp getOneMonthLaterTime() {
+        long nextMonth = new DateTime().plusMonths(1).getMillis();
+        return new Timestamp(nextMonth);
     }
 }

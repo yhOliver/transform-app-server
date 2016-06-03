@@ -9,6 +9,7 @@ import transform.app.server.handler.ContextHandler;
 import transform.app.server.interceptor.ErrorInterceptor;
 import transform.app.server.model.*;
 import transform.app.server.plugin.HikariCPPlugin;
+import transform.app.server.plugin.QuartzPlugin;
 import transform.app.server.router.APIRouter;
 
 /**
@@ -77,6 +78,11 @@ public class AppConfig extends JFinalConfig {
         arp.addMapping("tbconsignee_address", ConsigneeAddress.CONSIGNEE_ID, ConsigneeAddress.class); // 收货地址表
         arp.addMapping("tbgoods", Goods.GOODS_ID, Goods.class); //商品表
         arp.addMapping("tbgoods_comment", GoodsComment.GOCO_ID, GoodsComment.class);//商品评价表
+        arp.addMapping("t_token", Token.class); //token表
+
+        /** 定时任务插件**/
+        QuartzPlugin quartzPlugin = new QuartzPlugin("job.properies");
+        me.add(quartzPlugin);
     }
 
     /**

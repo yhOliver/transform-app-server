@@ -64,6 +64,7 @@ public class JFinalModelCase {
         arp.addMapping("tbconsignee_address", ConsigneeAddress.CONSIGNEE_ID, ConsigneeAddress.class); // 收货地址表
         arp.addMapping("tbgoods", Goods.GOODS_ID, Goods.class); //商品表
         arp.addMapping("tbgoods_comment", GoodsComment.GOCO_ID, GoodsComment.class);//商品评价表
+        arp.addMapping("t_token", Token.class); //token表
 
         arp.start();
     }

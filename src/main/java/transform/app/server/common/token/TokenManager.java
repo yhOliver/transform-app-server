@@ -1,25 +1,27 @@
 package transform.app.server.common.token;
 
+import com.jfinal.plugin.activerecord.Db;
+import com.jfinal.plugin.activerecord.IAtom;
+import com.jfinal.plugin.activerecord.Record;
+import transform.app.server.common.utils.DateUtils;
 import transform.app.server.common.utils.TokenUtil;
+import transform.app.server.model.Token;
 import transform.app.server.model.User;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.sql.SQLException;
+
+import static transform.app.server.model.Token.*;
+import static transform.app.server.model.User.USER_ID;
 
 /**
- * @author malongbo
- * @date 15-1-18
- * @package com.pet.project.common.token
+ * @author zhuqi259
+ *         <p>
+ *         token管理器
  */
 public class TokenManager {
     private static TokenManager me = new TokenManager();
 
-    private Map<String, User> tokens;
-    private Map<String, String> userToken;
-
-    public TokenManager() {
-        tokens = new ConcurrentHashMap<>();
-        userToken = new ConcurrentHashMap<>();
+    private TokenManager() {
     }
 
     /**
@@ -38,7 +40,16 @@ public class TokenManager {
      * @return User
      */
     public User validate(String token) {
-        return tokens.get(token);
+        /**
+         * SELECT * FROM t_token WHERE token = ? AND UNIX_TIMESTAMP(deadtime) > UNIX_TIMESTAMP()
+         * token没有过期
+         */
+        Record record = Db.findFirst("SELECT * FROM t_token WHERE token = ? AND UNIX_TIMESTAMP(deadtime) > UNIX_TIMESTAMP()", token);
+        if (record == null) {
+            return null;
+        } else {
+            return User.dao.findFirst("SELECT * FROM tbuser WHERE user_id=? AND status=1", record.getStr(USER_ID));
+        }
     }
 
     /**
@@ -47,10 +58,19 @@ public class TokenManager {
      * @param user User
      * @return String
      */
-    public String generateToken(User user) {
-        String token = TokenUtil.generateToken();
-        userToken.put(user.getStr(User.USER_ID), token);
-        tokens.put(token, user);
+    public String generateToken(final User user) {
+        final String token = TokenUtil.generateToken();
+        // 数据库新增token
+        Db.tx(new IAtom() {
+                  public boolean run() throws SQLException {
+                      return new Token()
+                              .set(TOKEN, token)
+                              .set(Token.USER_ID, user.userId())
+                              .set(DEADTIME, DateUtils.getOneMonthLaterTime())
+                              .save();
+                  }
+              }
+        );
         return token;
     }
 }
