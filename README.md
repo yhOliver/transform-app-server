@@ -59,6 +59,7 @@
 * 最新帖子:              POST /api/post/latest
 * 删帖:                  POST /api/post/del
 * 删回复:                POST /api/post/delReply
+* 点赞人员列表:           POST /api/post/zans
 
 ## 商城相关接口*
 * 查看类别          POST /api/goods/categories

@@ -40,6 +40,7 @@ import static transform.app.server.model.PostReply.*;
  * <p>
  * 删帖:                           POST /api/post/del
  * 删回复:                         POST /api/post/delReply
+ * 点赞人员列表:                    POST /api/post/zans
  *
  * @author zhuqi259
  */
@@ -173,6 +174,10 @@ public class PostAPIController extends BaseAPIController {
         String post_id = getPara(PostReply.POST_ID);
         int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
         int pageSize = getParaToInt("pageSize", defaultPageSize);
+        if (pageNumber < 1 || pageSize < 1) {
+            renderFailed("pageNumber and pageSize must more than 0");
+            return;
+        }
         // 此时帖子已存在，只需判断回复状态
         /**
          SELECT tpr.*, tu.user_nickname, tu.user_photo, tu2.user_nickname AS reply_to_username
@@ -241,7 +246,31 @@ public class PostAPIController extends BaseAPIController {
     public void detail() {
         String post_id = getPara(Post.POST_ID);
         int pageSize = getParaToInt("pageSize", defaultPageSize);
-        Record post = getAttr("post");
+        if (pageSize < 1) {
+            renderFailed("pageSize must more than 0");
+            return;
+        }
+        Record post;
+        // 登陆状态 与 非登陆状态
+        String token = getPara("token");
+        if (StringUtils.isNotEmpty(token)) {
+            // 登陆状态
+            User user = TokenManager.getMe().validate(token);
+            if (user == null) {
+                renderFailed("token is invalid");
+                return;
+            }
+            String user_id = user.userId();
+            /**
+             * SELECT tp.*, tt.tribe_name, (CASE WHEN tz.post_id IS NULL THEN 0 ELSE 1 END) AS zan_status FROM (SELECT * FROM tbpost WHERE post_id = ? AND status = 1) tp LEFT JOIN tbtribe tt ON tp.tribe_id = tt.tribe_id LEFT JOIN (SELECT post_id, user_id FROM t_zan WHERE user_id = ?) tz ON tp.post_id = tz.post_id
+             */
+            post = Db.findFirst("SELECT tp.*, tt.tribe_name, (CASE WHEN tz.post_id IS NULL THEN 0 ELSE 1 END) AS zan_status FROM (SELECT * FROM tbpost WHERE post_id = ? AND status = 1) tp LEFT JOIN tbtribe tt ON tp.tribe_id = tt.tribe_id LEFT JOIN (SELECT post_id, user_id FROM t_zan WHERE user_id = ?) tz ON tp.post_id = tz.post_id", post_id, user_id);
+        } else {
+            /**
+             * SELECT tp.*, tt.tribe_name, 0 AS zan_status FROM (SELECT * FROM tbpost WHERE post_id = ? AND status = 1) tp LEFT JOIN tbtribe tt ON tp.tribe_id = tt.tribe_id
+             */
+            post = Db.findFirst("SELECT tp.*, tt.tribe_name, 0 AS zan_status FROM (SELECT * FROM tbpost WHERE post_id = ? AND status = 1) tp LEFT JOIN tbtribe tt ON tp.tribe_id = tt.tribe_id", post_id);
+        }
         // 赞 (前10个赞)
         Page<Record> zans = Db.paginate(1, 10, "SELECT tu.user_id, tu.user_photo", "FROM (SELECT user_id FROM t_zan WHERE post_id = ? ORDER BY occurrence_time DESC) tz LEFT JOIN tbuser tu ON tz.user_id = tu.user_id", post_id); // LEFT JOIN 没问题
         // 评论第一页
@@ -260,6 +289,26 @@ public class PostAPIController extends BaseAPIController {
     }
 
     /**
+     * 点赞人员列表
+     * <p>
+     * POST、检查帖子存在
+     */
+    @Clear
+    @Before({POST.class, PostStatusInterceptor.class})
+    public void zans() {
+        int pageNumber = getParaToInt("pageNumber", defaultPageNumber);//页数从1开始
+        int pageSize = getParaToInt("pageSize", defaultPageSize);
+        if (pageNumber < 1 || pageSize < 1) {
+            renderFailed("pageNumber and pageSize must more than 0");
+            return;
+        }
+        String post_id = getPara(Post.POST_ID);
+        Page<Record> rs = Db.paginate(pageNumber, pageSize, "SELECT tu.user_id, tu.user_nickname, tu.user_photo", "FROM (SELECT user_id FROM t_zan WHERE post_id = ? ORDER BY occurrence_time DESC) tz LEFT JOIN tbuser tu ON tz.user_id = tu.user_id", post_id); // LEFT JOIN 没问题
+        renderJson(new BaseResponse(Code.SUCCESS, "", rs));
+    }
+
+
+    /**
      * 部落内帖子列表, 所有人可见，无需登录
      * <p>
      * POST、检查部落存在
@@ -270,6 +319,10 @@ public class PostAPIController extends BaseAPIController {
         // 发帖人，头像，时间，设备，发帖内容，媒体，评论数、赞数
         int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
         int pageSize = getParaToInt("pageSize", defaultPageSize);
+        if (pageNumber < 1 || pageSize < 1) {
+            renderFailed("pageNumber and pageSize must more than 0");
+            return;
+        }
         String tribe_id = getPara(TRIBE_ID);
         // 登陆状态 与 非登陆状态
         String token = getPara("token");
@@ -309,6 +362,10 @@ public class PostAPIController extends BaseAPIController {
     public void latest() {
         int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
         int pageSize = getParaToInt("pageSize", defaultPageSize);
+        if (pageNumber < 1 || pageSize < 1) {
+            renderFailed("pageNumber and pageSize must more than 0");
+            return;
+        }
         // 登陆状态 与 非登陆状态
         String token = getPara("token");
         if (StringUtils.isNotEmpty(token)) {
