@@ -16,5 +16,6 @@ target/
 logs/
 
 *.bat
+*.sh
 
 classes

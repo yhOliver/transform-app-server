@@ -1,36 +1,36 @@
 package transform.app.server.common.bean;
 
-import com.jfinal.plugin.activerecord.Record;
+import transform.app.server.model.Goods;
 
 import java.util.List;
 
 /**
- * 商品详情表
+ * 商品详情
  */
 public class GoodsDetailVO {
     /**
      * 商品基本信息
      */
-    private Record detailedInfo;
+    private Goods detailedInfo;
     /**
-     * 商品attr信息
+     * 商品属性信息
      */
-    private List<?> attr;
+    private List<?> attrs;
 
-    public List<?> getAttr() {
-        return attr;
-    }
-
-    public void setAttr(List<?> attr) {
-        this.attr = attr;
-    }
-
-    public Record getDetailedInfo() {
+    public Goods getDetailedInfo() {
         return detailedInfo;
     }
 
-    public void setDetailedInfo(Record detailedInfo) {
+    public void setDetailedInfo(Goods detailedInfo) {
         this.detailedInfo = detailedInfo;
+    }
+
+    public List<?> getAttrs() {
+        return attrs;
+    }
+
+    public void setAttrs(List<?> attrs) {
+        this.attrs = attrs;
     }
 }
 
