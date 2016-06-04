@@ -65,6 +65,8 @@
 * 查看商品列表       POST /api/goods/list
 * 查看商品详细信息   POST /api/goods/view
 * 查看商品评价       POST /api/goods/comments
+* 商品确认收货      POST /api/goods/confirmReceipt  <<<<= 待实现
+* 评价商品          POST /api/goods/comment
 
 ---
 #### 替换触发器

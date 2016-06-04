@@ -15,10 +15,10 @@ public class Goods extends Model<Goods> {
     public static String GOODS_NUMBER = "goods_number";
     public static String GOODS_PRICE = "goods_price";
     public static String GOODS_BRAND = "goods_brand";
-    public static String GOODS_DECRIBE_FILE = "goods_decribe_file";
     public static String GOODS_GALLERY = "goods_gallery";
     public static String CREATE_TIME = "create_time";
     public static String GOODS_ISONSALE ="goods_isonsale";
+    public static String NUM_OF_COMMENTS ="num_of_comments";// 商品评论数
 
     public static final Goods dao = new Goods();
 
