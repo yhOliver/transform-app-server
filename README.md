@@ -18,6 +18,7 @@
 * 修改手机号:            POST /api/account/changeMobile
 * 重置密码（忘记密码）:  POST /api/account/resetPwd
 * 我的预约:              POST /api/account/reservations
+* 查询用户列表:           POST /api/account/search
 
 ## 公共模块接口*
  

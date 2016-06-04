@@ -56,6 +56,7 @@ import static transform.app.server.model.UserConcern.CONCERN_ID;
  * 重置密码（忘记密码）: POST /api/account/resetPwd
  * <p>
  * 我的预约: POST /api/account/reservations
+ * 查询用户列表: POST /api/account/search
  *
  * @author zhuqi259
  */
@@ -663,6 +664,29 @@ public class AccountAPIController extends BaseAPIController {
         Page<Record> result = Db.paginate(pageNumber, pageSize, "SELECT *",
                 "FROM venue_subscribe WHERE user_id = ? ORDER BY createtime DESC", user_id);
         renderJson(new BaseResponse(Code.SUCCESS, "", result));
+    }
+
+    /**
+     * 查询用户列表[模糊查询] TODO 待确定模糊查询用户列表需求
+     * <p>
+     * POST
+     */
+    @Clear
+    @Before(POST.class)
+    public void search() {
+        int pageNumber = getParaToInt("pageNumber", defaultPageNumber); // 页数从1开始
+        int pageSize = getParaToInt("pageSize", defaultPageSize);
+        if (pageNumber < 1 || pageSize < 1) {
+            renderFailed("pageNumber and pageSize must more than 0");
+            return;
+        }
+        String wd = getPara("wd");
+        if (!notNull(Require.me().put(wd, "search word can not be null"))) {
+            return;
+        }
+        wd = "%" + wd + "%";
+        Page<Record> users = Db.paginate(pageNumber, pageSize, "SELECT user_id, user_nickname, user_mobile, user_photo", "FROM tbuser WHERE user_nickname LIKE ? OR user_mobile LIKE ?", wd, wd);
+        renderJson(new BaseResponse(Code.SUCCESS, "", users));
     }
 }
 
