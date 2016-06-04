@@ -23,6 +23,8 @@
 ## 公共模块接口*
  
 * 意见反馈:              POST /api/feedback
+* 收藏:                 POST /api/favorite
+* 取消收藏:              POST /api/cancelFavorite
 
 ## 文件上传总接口
  

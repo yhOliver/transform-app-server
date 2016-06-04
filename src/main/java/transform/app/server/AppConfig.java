@@ -79,6 +79,7 @@ public class AppConfig extends JFinalConfig {
         arp.addMapping("tbgoods", Goods.GOODS_ID, Goods.class); //商品表
         arp.addMapping("tbgoods_comment", GoodsComment.GOCO_ID, GoodsComment.class);//商品评价表
         arp.addMapping("t_token", Token.class); //token表
+        arp.addMapping("t_collection", Favorite.COLLECTION_ID, Favorite.class); //收藏表
 
         /** 定时任务插件**/
         QuartzPlugin quartzPlugin = new QuartzPlugin("job.properies");

@@ -397,9 +397,9 @@ public class PostAPIController extends BaseAPIController {
     /**
      * 删帖， 帖子发布者 （用户状态数-1）
      * <p>
-     * POST、登陆、帖子状态
+     * POST、登陆、帖子状态、事务
      */
-    @Before(PostStatusInterceptor.class)
+    @Before({PostStatusInterceptor.class, Tx.class})
     public void del() {
         String user_id = getUser().userId();
         String post_id = getPara(Post.POST_ID);
@@ -417,8 +417,9 @@ public class PostAPIController extends BaseAPIController {
     /**
      * 删回复（帖子的回复数-1）
      * <p>
-     * POST、登陆、回复者
+     * POST、登陆、回复者、事务
      */
+    @Before(Tx.class)
     public void delReply() {
         String user_id = getUser().userId();
         String reply_id = getPara(PostReply.REPLY_ID);
