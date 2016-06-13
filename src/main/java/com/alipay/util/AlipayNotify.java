@@ -1,4 +1,4 @@
-﻿package com.alipay.util;
+package com.alipay.util;
 
 import com.alipay.config.AlipayConfig;
 import com.alipay.sign.RSA;

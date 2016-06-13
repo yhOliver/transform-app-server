@@ -7,7 +7,6 @@ import com.alipay.util.AlipayCore;
 import com.jfinal.aop.Before;
 import com.jfinal.core.Controller;
 import transform.app.server.interceptor.POST;
-import transform.app.server.interceptor.TokenInterceptor;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -26,7 +25,7 @@ public class AlipayAPIController extends Controller {
     /**
      * 添加签名验证
      */
-    @Before({POST.class, TokenInterceptor.class})
+    @Before({POST.class})
     public void sign(){
         //获取所有参数
         String out_trade_no = getPara("out_trade_no");
@@ -58,7 +57,7 @@ public class AlipayAPIController extends Controller {
             e.printStackTrace();
         }
 
-        final String payInfoString = orderInfo + "&sign=\""+sign+"\"&sign_type=\""+AlipayConfig.sign_type+"\"";
+        final String payInfoString = orderInfo + "&sign="+sign+"&sign_type="+AlipayConfig.sign_type;
         PayInfo payInfo = new PayInfo();
         payInfo.setMsg("");
         payInfo.setPayInfo(payInfoString);
