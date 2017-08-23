@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no,minimal-ui" name="viewport">
+    <title>Neutron</title>
+    <link href="/asserts/style.css" rel="stylesheet">
+</head>
+<body>
+<div id="root">
+    <div id="App">
+        <div class="g-page" id="Audit">
+            <div class="m-header">
+                <div id="goBack" class="left">
+                    <span class="icon i-back"></span>
+                </div>
+                <div class="middle">已审核用户列表</div>
+                <div class="right"></div>
+            </div>
+            <div class="main">
+                <div class="row title">
+                    <div class="checkbox">
+                        <input id="checkAll" type="checkbox" />
+                    </div>
+                    <div class="id">学号</div>
+                    <div class="nickname">姓名</div>
+                    <div class="mobile">手机号</div>
+                </div>
+            </div>
+            <div class="btns">
+                <div class="reject">删除账号</div>
+            </div>
+        </div>
+    </div>
+</div>
+<script id="tpl-list" type="text/x-handlebars-template">
+    {{#data}}
+    <div class="row">
+        <div class="checkbox">
+            <input type="checkbox" name="id" data-id="{{user_id}}" />
+        </div>
+        <div class="id">{{user_code}}</div>
+        <div class="nickname">{{user_nickname}}</div>
+        <div class="mobile">{{user_mobile}}</div>
+    </div>
+    {{/data}}
+</script>
+<script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="/asserts/handlebars-v4.0.10.js"></script>
+<script>
+    $(function () {
+        initPage(); // init page
+
+        $('#goBack').click(function(){
+            history.go(-1);
+        });
+
+        var $checkAll = $('#checkAll');
+
+        $checkAll.click(function(){
+            var allChecked = this.checked;
+
+            $('input[name=id]').each(function(idx, el){
+                el.checked = allChecked;
+            });
+        });
+
+        //拒绝按钮
+        $('.reject').click(function(){
+            doSubmit(0);
+        });
+    });
+
+    /**
+     * 提交审核结果
+     * @param type 0: 不通过， 1：通过
+     */
+    function doSubmit(type){
+        var checkedArr = [];
+
+        $('input[name=id]').filter(function(idx, el){
+            return el.checked;
+        }).map(function(idx, el){
+            checkedArr.push($(el).data('id'));
+        });
+
+        if(checkedArr.length){
+            $.post('/api/account/auth',{
+                ids : checkedArr.join('-'),
+                type : type
+            }, function(res){
+                if(res.status == 0){
+                    alert('删除成功');
+                    location.reload();
+                }else{
+                    alert(res.message);
+                }
+            });
+        }
+    }
+
+    function initPage(){
+        var source = $('#tpl-list').html();
+        var template = Handlebars.compile(source);
+
+        $.post('/api/account/allusers', function(res){
+            if(res.status == 0){
+                $('.main').append(template(res))
+            }else{
+                alert(res.message);
+            }
+        });
+    }
+</script>
+</body>
+</html>

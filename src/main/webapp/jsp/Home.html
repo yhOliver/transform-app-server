@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no,minimal-ui" name="viewport">
+    <title>Neutron</title>
+    <link rel="stylesheet" href="/asserts/swiper-3.4.2.min.css">
+    <link href="/asserts/style.css" rel="stylesheet">
+    <style>
+       .img{
+           width: 100%;
+           height: 200px;
+       }
+    </style>
+</head>
+<body>
+<div id="root">
+    <div data-reactroot="" id="App">
+        <div class="g-page" id="Home">
+            <div class="m-header">
+                <div class="left"></div>
+                <div class="middle">首页</div>
+                <div class="right"></div>
+            </div>
+                <div class="swiper-container">
+                    <div class="swiper-wrapper">
+                        <div class="swiper-slide">
+                            <img class="img" src="http://odl96infd.bkt.clouddn.com/1.jpeg" />
+                        </div>
+                        <div class="swiper-slide">
+                            <img class="img" src="http://odl96infd.bkt.clouddn.com/2.jpeg" />
+                        </div>
+                        <div class="swiper-slide">
+                            <img class="img" src="http://odl96infd.bkt.clouddn.com/3.jpeg" />
+                        </div>
+                    </div>
+                    <!-- 如果需要分页器 -->
+                    <div class="swiper-pagination"></div>
+                </div>
+            <div class="recent">
+                <div class="left"><span class="icon i-countdown"></span></div>
+                <div class="middle">尚无学习记录</div>
+                <div class="right"><span class="icon i-back"></span></div>
+            </div>
+            <div class="body">
+                <div class="row">
+                    <div class="left">
+                        <div class="title green">已学课程</div>
+                        <div id="history" class="content"></div>
+                    </div>
+                    <div class="right">
+                        <div class="title red">热门课程</div>
+                        <div id="hotCourses" class="content"></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="left">
+                        <div class="title blue">最新资源</div>
+                        <div class="content">
+                            <div class="li">暂无数据</div>
+                        </div>
+                    </div>
+                    <div class="right">
+                        <div class="title orange">热门资源</div>
+                        <div id="hotResources" class="content"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-strip">
+                <div class="tab"><a class="active" href="./home.html"><span class="icon i-home"></span><span>首页</span></a></div>
+                <div class="tab"><a href="./course.html"><span class="icon i-course"></span><span>课堂</span></a></div>
+                <div class="tab"><a href="./resource.html"><span class="icon i-resource"></span><span>资源</span></a></div>
+                <div class="tab"><a href="./mine.html"><span class="icon i-mine"></span><span>我的</span></a></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script id="tpl-list" type="text/x-handlebars-template">
+    {{#.}}
+        <div class="li" data-filename="{{location}}">
+            <span>{{addOne @index}}. {{name}}</span>
+            <span class="icon i-back"></span>
+        </div>
+    {{/.}}
+</script>
+<script src="/asserts/handlebars-v4.0.10.js"></script>
+<script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="/asserts/swiper-3.4.2.jquery.min.js"></script>
+<script>
+    $(function(){
+        var mySwiper = new Swiper ('.swiper-container', {
+            direction: 'horizontal',
+            loop: true,
+
+            // 如果需要分页器
+            pagination: '.swiper-pagination'
+        });
+
+        Handlebars.registerHelper("addOne",function(index){
+           return index+1;
+        });
+
+        $.post('/api/account/home', function(res){
+            if(res.status == 0){
+                var data = res.data;
+                var source = $('#tpl-list').html();
+                var template = Handlebars.compile(source);
+
+                $('#history').html(template(data.history));
+                $('#hotCourses').html(template(data.hotCourses));
+                $('#hotResources').html(template(data.hotResources));
+
+                $('.content .li').click(function(eve){
+                    var $tar = $(eve.target);
+
+                    location.href = './courses/' + $tar.closest('.li').data('filename');
+                });
+            }else{
+                alert(res.message);
+            }
+        })
+    })
+</script>
+</body>
+</html>

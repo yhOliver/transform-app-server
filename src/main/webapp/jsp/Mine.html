@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no,minimal-ui" name="viewport">
+    <title>Neutron</title>
+    <link href="/asserts/style.css" rel="stylesheet">
+</head>
+<body>
+<div id="root">
+    <div data-reactroot="" id="App">
+        <div class="g-page" id="Mine">
+            <div class="m-header">
+                <div class="left"></div>
+                <div class="middle">我的</div>
+                <div class="right"></div>
+            </div>
+            <div class="user">
+                <div class="left"><span class="icon i-user"></span></div>
+                <div class="right">
+                    <div id="name" class="name"></div>
+                    <div id="desc" class="desc"></div>
+                </div>
+            </div>
+            <div class="list">
+                <div id="userFavorite" class="item">
+                    <div class="left collection"><span class="icon i-collection"></span></div>
+                    <div class="middle">我的收藏</div>
+                    <div class="right"><span class="icon i-back"></span></div>
+                </div>
+                <div id="userAudit" class="item" style="display: none;">
+                    <div class="left audit"><span class="icon i-audit"></span></div>
+                    <div class="middle">用户审核</div>
+                    <div class="right"><span class="icon i-back"></span></div>
+                </div>
+                <div id="accounts" class="item" style="display: none;">
+                    <div class="left audit"><span class="icon i-audit"></span></div>
+                    <div class="middle">已审核用户查看</div>
+                    <div class="right"><span class="icon i-back"></span></div>
+                </div>
+            </div>
+            <div class="button" id="logout">退出登录</div>
+            <div class="tab-strip">
+                <div class="tab"><a href="home.html"><span class="icon i-home"></span><span>首页</span></a></div>
+                <div class="tab"><a href="course.html"><span class="icon i-course"></span><span>课堂</span></a></div>
+                <div class="tab"><a href="resource.html"><span class="icon i-resource"></span><span>资源</span></a></div>
+                <div class="tab"><a class="active" href="mine.html"><span class="icon i-mine"></span><span>我的</span></a>
+                </div>
+            </div>
+        </div></div>
+</div>
+<script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="http://apps.bdimg.com/libs/jquery.cookie/1.4.1/jquery.cookie.js"></script>
+<script>
+    $(function () {
+        var $userAudit = $('#userAudit');
+        var $accounts = $('#accounts');
+        var $userFavorite = $('#userFavorite');
+
+        $userAudit.click(function(){
+            location.href = './audit.html';
+        });
+
+        $accounts.click(function(){
+            location.href = './accounts.html';
+        });
+        $userFavorite.click(function(){
+            location.href = './favorite.html';
+        });
+
+        $('#name').text($.cookie('usernickname'));
+        $('#desc').text('No.' + $.cookie('username'));
+
+        if($.cookie('user_type') == 1){
+            $userAudit.show();
+            $accounts.show();
+        }
+
+        $("#logout").click(function(){
+            $.post('/api/account/logout', function(res){
+                if(res.status == 0){
+                    location.href = '/login.html';
+                }
+            else{
+                alert(res.message);
+            }});
+        })
+    })
+</script>
+</body>
+</html>

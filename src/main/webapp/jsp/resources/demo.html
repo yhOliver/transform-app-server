@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no,minimal-ui" name="viewport">
+    <title>Neutron</title>
+    <link href="/asserts/style.css" rel="stylesheet">
+    <link href="http://vjs.zencdn.net/6.2.5/video-js.css" rel="stylesheet">
+</head>
+<body>
+<div id="root">
+    <div data-reactroot="" id="App">
+        <div id="ResourceTemp">
+            <div class="m-header">
+                <div id="goBack" class="left"><span class="icon i-back"></span></div>
+                <div class="middle">资源</div>
+                <div class="right"></div>
+            </div>
+            <div class="main">xxx机器人操作教学</div>
+            <video id="player" class="video-js" controls preload="auto">
+                <source src="/files/pingguo.mp4" type="video/mp4">
+            </video>
+        </div>
+    </div>
+</div>
+<script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="http://vjs.zencdn.net/6.2.5/video.js"></script>
+<script>
+    $(function () {
+        $('#goBack').click(function(){
+            history.go(-1);
+        });
+
+        var player = videojs('player');
+        player.ready(function(){
+            player.width(screen.width);
+            player.play();
+        });
+    })
+</script>
+</body>

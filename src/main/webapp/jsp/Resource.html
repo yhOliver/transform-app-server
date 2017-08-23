@@ -1,0 +1,129 @@
+<!doctype html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no,minimal-ui" name="viewport">
+    <title>Neutron</title>
+    <link href="/asserts/style.css" rel="stylesheet">
+</head>
+<body>
+<div id="root">
+    <div data-reactroot="" id="App">
+        <div class="g-page" id="Resource">
+            <div class="m-header">
+                <div class="left"></div>
+                <div class="middle">资源</div>
+                <div class="right"></div>
+            </div>
+            <div class="filters">
+                <div class="row">
+                    <div class="label">类型：</div>
+                    <div class="types">
+                        <div class="type active">全部</div>
+                    </div>
+                </div>
+            </div>
+            <div class="list">
+                <div class="c-listview">
+                    <div class="c-scrollview">
+                        <div>
+                            <div class="row"
+                                 data-location="demo.html"
+                                 data-description="机机器人操作巴拉巴拉巴拉巴巴拉巴拉巴拉机器人"
+                                 data-image="http://odl96infd.bkt.clouddn.com/machine2machine.png"
+                                 data-type="2"
+                                 data-name="机器人操作"
+                            >
+                                <div class="left">
+                                    <img src="http://odl96infd.bkt.clouddn.com/machine2machine.png" />
+                                </div>
+                                <div class="middle">
+                                    <div class="content">
+                                        <div class="title">机器人操作</div>
+                                        <div class="desc">
+                                            机机器人操作巴拉巴拉巴拉巴巴拉巴拉巴拉机器人
+                                        </div>
+                                        <div class="favorite">
+                                            <span class="icon i-heart"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="right">
+                                    <span class="icon i-back"></span>
+                                </div>
+                            </div>
+                            <div class="row"
+                                 data-location="demo1.html"
+                                 data-description="机机器人操作巴拉巴拉巴拉巴巴拉巴拉巴拉机器人"
+                                 data-image="http://odl96infd.bkt.clouddn.com/machine2machine.png"
+                                 data-type="2"
+                                 data-name="机器人操作"
+                            >
+                                <div class="left">
+                                    <img src="http://odl96infd.bkt.clouddn.com/machine2machine.png" />
+                                </div>
+                                <div class="middle">
+                                    <div class="content">
+                                        <div class="title">机器人操作</div>
+                                        <div class="desc">
+                                            机机器人操作巴拉巴拉巴拉巴巴拉巴拉巴拉机器人
+                                        </div>
+                                        <div class="favorite">
+                                            <span class="icon i-heart"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="right">
+                                    <span class="icon i-back"></span>
+                                </div>
+                            </div>
+                            <p class="foot-tip">没有更多了</p></div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-strip">
+                <div class="tab"><a href="./home.html"><span class="icon i-home"></span><span>首页</span></a></div>
+                <div class="tab"><a href="./course.html"><span class="icon i-course"></span><span>课堂</span></a></div>
+                <div class="tab"><a class="active" href="./resource.html"><span
+                        class="icon i-resource"></span><span>资源</span></a></div>
+                <div class="tab"><a href="./mine.html"><span class="icon i-mine"></span><span>我的</span></a></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+<script>
+    $(function () {
+        $('.row').click(function(eve){
+            var $tar = $(eve.target);
+
+            location.href = './resources/' + $tar.closest('.row').data('location');
+        });
+
+        $('.favorite').click(function(eve){
+            eve.stopPropagation();
+
+            var $tar = eve.target.tagName === "SPAN" ? $(eve.target) : $(eve.target).children('.i-heart');
+            var params = $tar.closest('.row').data();
+
+            if($tar.hasClass('red')){
+                $tar.removeClass('red');
+
+                params.saveOrDelete = 1;
+            }else{
+                $tar.addClass('red');
+
+                params.saveOrDelete = 0;
+            }
+
+            $.post('/api/account/favorite', params, function(res){
+                if(res.status == 0){
+                    alert('操作成功!');
+                }else{
+                    alert(res.message);
+                }
+            });
+        });
+    })
+</script>
+</body>
+</html>

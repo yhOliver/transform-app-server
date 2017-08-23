@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no,minimal-ui" name="viewport">
+    <title>Neutron</title>
+    <link href="/asserts/style.css" rel="stylesheet">
+</head>
+<body>
+<div id="root">
+    <div id="App">
+        <section class="g-page" id="Login">
+            <div class="m-header">
+                <div class="left"></div>
+                <div class="middle">欢迎回来</div>
+                <div class="right"></div>
+            </div>
+            <div class="main">
+                <div class="input-box">
+                    <div class="left"><span class="icon i-mine"></span></div>
+                    <div class="right"><input id="username" type="text" class="username" maxlength="16" value=""></div>
+                </div>
+                <div class="input-box">
+                    <div class="left"><span class="icon i-password"></span></div>
+                    <div class="right"><input id="password" type="password" class="password" maxlength="16" value=""></div>
+                </div>
+                <div id="btnSubmit" class="button">立即登录</div>
+                <div id="btnRegister" class="button">立即注册</div>
+            </div>
+        </section>
+    </div>
+</div>
+<script src="asserts/jquery-3.2.1.js"></script>
+<script>
+    $(function(){
+        var $username = $('#username');
+        var $password = $('#password');
+
+        // 立即登录
+        $('#btnSubmit').on('click', function(){
+            var usernameVal = $username.val();
+            var passwordVal = $password.val();
+
+            if(!usernameVal || !passwordVal){
+                return alert('用户名或密码不得为空！');
+            }
+
+            $.post('/api/account/login', {
+                user_code : usernameVal,
+                user_password : passwordVal
+            }).then(function(res){
+                if(res.status == 0){
+                    location.href = '/jsp/home.html';
+                }else{
+                    alert(res.message);
+                }
+            })
+        });
+
+        $("#btnRegister").click(function(){
+            location.href = "/register.html";
+        });
+    })
+</script>
+</body>
+</html>

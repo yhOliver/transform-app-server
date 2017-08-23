@@ -1,0 +1,100 @@
+<!doctype html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no,minimal-ui" name="viewport">
+    <title>Neutron</title>
+    <link href="/asserts/style.css" rel="stylesheet">
+</head>
+<body>
+<div id="root">
+    <div data-reactroot="" id="App">
+        <div class="g-page" id="Resource">
+            <div class="m-header">
+                <div id="goBack" class="left"><span class="icon i-back"></span></div>
+                <div class="middle">收藏</div>
+                <div class="right"></div>
+            </div>
+            <div class="list">
+                <div class="c-listview">
+                    <div class="c-scrollview"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script id="tpl-list" type="text/x-handlebars-template">
+    {{#.}}
+    <div class="row"
+         data-location="{{location}}"
+         data-image="{{image}}"
+         data-description="{{description}}"
+         data-type="{{type}}"
+         data-name="{{name}}"
+    >
+        <div class="left">
+            <img src="{{image}}"/>
+        </div>
+        <div class="middle">
+            <div class="content">
+                <div class="title">{{name}}</div>
+                <div class="desc">{{description}}</div>
+                <div class="favorite">
+                    <span class="icon i-heart red"></span>
+                </div>
+            </div>
+        </div>
+        <div class="right">
+            <span class="icon i-back"></span>
+        </div>
+    </div>
+    {{/.}}
+</script>
+<script src="/asserts/handlebars-v4.0.10.js"></script>
+<script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+<script>
+    $(function () {
+        $('#goBack').click(function () {
+            history.go(-1);
+        });
+
+
+        $.post('/api/account/getFavoriteList', function(res){
+            if(res.status == 0){
+                var data = res.data;
+                var source = $('#tpl-list').html();
+                var template = Handlebars.compile(source);
+
+                $('.c-scrollview').html(template(data));
+
+                $('.row').click(function (eve) {
+                    var $tar = $(eve.target);
+
+                    location.href = './resources/' + $tar.closest('.row').data('location');
+                });
+
+                $('.favorite').click(function (eve) {
+                    eve.stopPropagation();
+
+                    var $tar = eve.target.tagName === "SPAN" ? $(eve.target) : $(eve.target).children('.i-heart');
+                    var params = $tar.closest('.row').data();
+                    params.saveOrDelete = 1;
+
+                    $tar.removeClass('red');
+                    $.post('/api/account/favorite', params).done(function(res){
+                        if(res.status == 0){
+                            location.reload();
+                        }else{
+                            alert(res.message);
+                        }
+                    }).fail(function(){
+                        alert('网络异常，请检查连接！');
+                    });
+                });
+            }else{
+                alert(res.message);
+            }
+        })
+    })
+</script>
+</body>
+</html>
