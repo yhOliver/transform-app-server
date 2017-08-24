@@ -598,6 +598,32 @@ html, body {
     font-size: 13px;
     line-height: 1.5;}
 
+#Skeleton .section .body .h1{
+    margin: 10px 0;
+}
+
+
+#Skeleton .section .body ul{
+    list-style: circle;
+    padding-left: 20px;
+}
+
+#Skeleton .section .body img{
+    width: 100%;
+}
+
+#Skeleton .section .body table{
+    width: 100%;
+    border-top: #ccc solid 1px;
+    border-left: #ccc solid 1px;
+    text-align: center;
+}
+
+#Skeleton .section .body table td{
+    border-right: #ccc solid 1px;
+    border-bottom: #ccc solid 1px;
+}
+
 .backtop {
     position: fixed;
     bottom: 30px;
