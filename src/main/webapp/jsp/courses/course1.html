@@ -21,7 +21,7 @@
                 <div data-id="tab-3" class="tab">仿真实验</div>
             </div>
             <div class="container">
-                <div>
+                <div style="height: 6900px;">
                     <div class="section" id="tab-1">
                         <div class="title nobordertop">实验目的</div>
                         <div class="body">
@@ -270,7 +270,7 @@
 <script src="/asserts/iscroll.js"></script>
 <script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
 <script>
-    window.onload=function(){
+    $(function(){
         $('.container').css({
             height: innerHeight - 84
         });
@@ -294,7 +294,7 @@
             var tabId = $tar.data('id');
             iscroll.scrollToElement('#' + tabId, 500);
         })
-    }
+    })
 </script>
 </body>
 </html>
