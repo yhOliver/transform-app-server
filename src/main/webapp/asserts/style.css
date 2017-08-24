@@ -593,10 +593,11 @@ html, body {
 }
 
 #Skeleton .section .body {
-    height: 500px;
     padding: 10px;
+    line-height: 1.5;
+    color: #888;
     font-size: 13px;
-    line-height: 1.5;}
+}
 
 #Skeleton .section .body .h1{
     margin: 10px 0;
