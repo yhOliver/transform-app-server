@@ -46,7 +46,10 @@ public class APINotFoundHandler extends Handler {
                 next.handle(target, request, response, isHandled);
                 return;
             }
-
+            if (target.trim().contains("/images/")){
+                next.handle(target, request, response, isHandled);
+                return;
+            }
             //访问其他的页面拦截
             if (target.trim().startsWith(prefix) && target.trim().endsWith(postfix)){
                 if (request.getSession().getAttribute("username") != null){
