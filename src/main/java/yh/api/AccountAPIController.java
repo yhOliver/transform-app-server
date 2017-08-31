@@ -18,6 +18,8 @@ import yh.model.User;
 import yh.model.Watch;
 
 import javax.servlet.http.Cookie;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -104,7 +106,15 @@ public class AccountAPIController extends BaseAPIController {
             Cookie cookie = new Cookie("username", user_code);
             cookie.setMaxAge(648000000);
             cookie.setPath("/");
-            Cookie cookie1 = new Cookie("usernickname", nowUser.getStr("user_nickname"));
+            Cookie cookie1;
+            try {
+                String username = URLDecoder.decode(nowUser.getStr("user_nickname"),"utf-8");
+                cookie1 = new Cookie("usernickname", username);
+            } catch (UnsupportedEncodingException e) {
+                cookie1 = new Cookie("usernickname", "username");
+                e.printStackTrace();
+            }
+
             cookie1.setMaxAge(648000000);
             cookie1.setPath("/");
             Cookie cookie2 = new Cookie("user_type", String.valueOf(nowUser.getInt(User.type)));
