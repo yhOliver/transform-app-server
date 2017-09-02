@@ -132,6 +132,28 @@
                 }
             });
         });
+
+        $.post('/api/account/getFavoriteList').then(function(res){
+            if(res.status === 0){
+                var favList = res.data;
+
+                if(favList && favList.length){
+                    $('.favorite').each(function(idx, el){
+                        var location = $(el).closest('.row').data('location');
+
+                        favList.forEach(function(item){
+                            if(item.location === location){
+                                $(el).children('.i-heart').addClass('red');
+                            }
+                        });
+                    });
+                }
+            }else{
+                alert(res.message);
+            }
+        }).fail(function(){
+            alert('网络异常，请稍后再试!');
+        });
     })
 </script>
 </body>

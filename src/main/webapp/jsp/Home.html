@@ -6,10 +6,10 @@
     <link rel="stylesheet" href="/asserts/swiper-3.4.2.min.css">
     <link href="/asserts/style.css" rel="stylesheet">
     <style>
-       .img{
-           width: 100%;
-           height: 200px;
-       }
+        .img {
+            width: 100%;
+            height: 200px;
+        }
     </style>
 </head>
 <body>
@@ -21,25 +21,20 @@
                 <div class="middle">首页</div>
                 <div class="right"></div>
             </div>
-                <div class="swiper-container">
-                    <div class="swiper-wrapper">
-                        <div class="swiper-slide">
-                            <img class="img" src="http://odl96infd.bkt.clouddn.com/1.jpeg" />
-                        </div>
-                        <div class="swiper-slide">
-                            <img class="img" src="http://odl96infd.bkt.clouddn.com/2.jpeg" />
-                        </div>
-                        <div class="swiper-slide">
-                            <img class="img" src="http://odl96infd.bkt.clouddn.com/3.jpeg" />
-                        </div>
+            <div class="swiper-container">
+                <div class="swiper-wrapper">
+                    <div class="swiper-slide">
+                        <img class="img" src="http://odl96infd.bkt.clouddn.com/1.jpeg"/>
                     </div>
-                    <!-- 如果需要分页器 -->
-                    <div class="swiper-pagination"></div>
+                    <div class="swiper-slide">
+                        <img class="img" src="http://odl96infd.bkt.clouddn.com/2.jpeg"/>
+                    </div>
+                    <div class="swiper-slide">
+                        <img class="img" src="http://odl96infd.bkt.clouddn.com/3.jpeg"/>
+                    </div>
                 </div>
-            <div class="recent">
-                <div class="left"><span class="icon i-countdown"></span></div>
-                <div class="middle">尚无学习记录</div>
-                <div class="right"><span class="icon i-back"></span></div>
+                <!-- 如果需要分页器 -->
+                <div class="swiper-pagination"></div>
             </div>
             <div class="body">
                 <div class="row">
@@ -66,9 +61,11 @@
                 </div>
             </div>
             <div class="tab-strip">
-                <div class="tab"><a class="active" href="./home.html"><span class="icon i-home"></span><span>首页</span></a></div>
+                <div class="tab"><a class="active" href="./home.html"><span
+                        class="icon i-home"></span><span>首页</span></a></div>
                 <div class="tab"><a href="./course.html"><span class="icon i-course"></span><span>课堂</span></a></div>
-                <div class="tab"><a href="./resource.html"><span class="icon i-resource"></span><span>资源</span></a></div>
+                <div class="tab"><a href="./resource.html"><span class="icon i-resource"></span><span>资源</span></a>
+                </div>
                 <div class="tab"><a href="./mine.html"><span class="icon i-mine"></span><span>我的</span></a></div>
             </div>
         </div>
@@ -76,18 +73,18 @@
 </div>
 <script id="tpl-list" type="text/x-handlebars-template">
     {{#.}}
-        <div class="li" data-filename="{{location}}">
-            <span>{{addOne @index}}. {{name}}</span>
-            <span class="icon i-back"></span>
-        </div>
+    <div class="li" data-filename="{{location}}">
+        <span>{{addOne @index}}. {{name}}</span>
+        <span class="icon i-back"></span>
+    </div>
     {{/.}}
 </script>
 <script src="/asserts/handlebars-v4.0.10.js"></script>
 <script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
 <script src="/asserts/swiper-3.4.2.jquery.min.js"></script>
 <script>
-    $(function(){
-        var mySwiper = new Swiper ('.swiper-container', {
+    $(function () {
+        var mySwiper = new Swiper('.swiper-container', {
             direction: 'horizontal',
             loop: true,
 
@@ -95,12 +92,12 @@
             pagination: '.swiper-pagination'
         });
 
-        Handlebars.registerHelper("addOne",function(index){
-           return index+1;
+        Handlebars.registerHelper("addOne", function (index) {
+            return index + 1;
         });
 
-        $.post('/api/account/home', function(res){
-            if(res.status == 0){
+        $.post('/api/account/home', function (res) {
+            if (res.status == 0) {
                 var data = res.data;
                 var source = $('#tpl-list').html();
                 var template = Handlebars.compile(source);
@@ -109,12 +106,15 @@
                 $('#hotCourses').html(template(data.hotCourses));
                 $('#hotResources').html(template(data.hotResources));
 
-                $('.content .li').click(function(eve){
+                $('.content .li').click(function (eve) {
                     var $tar = $(eve.target);
+                    var filename = $tar.closest('.li').data('filename');
 
-                    location.href = './courses/' + $tar.closest('.li').data('filename');
+                    if (filename) {
+                        location.href = './courses/' + filename;
+                    }
                 });
-            }else{
+            } else {
                 alert(res.message);
             }
         })

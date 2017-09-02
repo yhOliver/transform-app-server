@@ -90,17 +90,19 @@
         });
 
         if(checkedArr.length){
-            $.post('/api/account/auth',{
-                ids : checkedArr.join('-'),
-                type : type
-            }, function(res){
-                if(res.status == 0){
-                    alert('审核成功');
-                    location.reload();
-                }else{
-                    alert(res.message);
-                }
-            });
+            if(window.confirm('确认执行此操作吗？')){
+                $.post('/api/account/auth',{
+                    ids : checkedArr.join('-'),
+                    type : type
+                }, function(res){
+                    if(res.status == 0){
+                        alert('审核成功');
+                        location.reload();
+                    }else{
+                        alert(res.message);
+                    }
+                });
+            }
         }
     }
 
