@@ -15,9 +15,10 @@
                 <div class="middle">典型数控机床数控系统配置、操作及维修技术</div>
                 <div class="right"></div>
             </div>
-            <div class="container">
+            <div id="loading">加载中，请稍后...</div>
+            <div class="container" style="display:none;">
                 <div class="section">
-                    <div class="body" style="height: 15900px;">
+                    <div class="body">
                         <p class="h1">项目一、典型数控机床数控系统配置、操作及维修技术</p>
                         <p>一、 FANUC新一代数控系统特点及内部组成</p>
                         <img src="../images/course2/image002.jpg" alt="">
@@ -176,21 +177,23 @@
 <script src="/asserts/iscroll.js"></script>
 <script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
 <script>
-     $(function(){
-        $('.container').css({
-            height : innerHeight - 44
-        });
+  window.onload = function () {
+    $('#loading').hide();
 
-        $('#goBack').click(function(){
-            history.go(-1);
-        });
+    $('.container').show().css({
+      height: innerHeight - 44
+    });
 
-        var iscroll = new IScroll('.container');
+    $('#goBack').click(function () {
+      history.go(-1);
+    });
 
-        $('.backtop').click(function(){
-            iscroll.scrollTo(0,0,500);
-        });
-    })
+    var iscroll = new IScroll('.container');
+
+    $('.backtop').click(function () {
+      iscroll.scrollTo(0, 0, 500);
+    });
+  }
 </script>
 </body>
 </html>

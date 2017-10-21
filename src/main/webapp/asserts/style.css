@@ -625,6 +625,13 @@ html, body {
     border-bottom: #ccc solid 1px;
 }
 
+#Skeleton #loading{
+    text-align: center;
+    line-height: 300px;
+    color: #888;
+    font-size: 12px;
+}
+
 .backtop {
     position: fixed;
     bottom: 30px;
