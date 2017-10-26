@@ -22,7 +22,8 @@
                 <div data-id="tab-4" class="tab">实施与监控</div>
                 <div data-id="tab-5" class="tab">总结与评价</div>
             </div>
-            <div class="container">
+            <div id="loading">加载中，请稍后...</div>
+            <div class="container" style="display: none;">
                 <div>
                     <div class="section" id="tab-1">
                         <div class="title nobordertop">学习任务书</div>
@@ -53,31 +54,33 @@
 <script src="/asserts/iscroll.js"></script>
 <script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
 <script>
-    $(function(){
-        $('.container').css({
-            height : innerHeight - 84
-        });
+   window.onload = function() {
+    $('#loading').hide();
 
-        $('#goBack').click(function(){
-            history.go(-1);
-        });
+    $('.container').show().css({
+      height: innerHeight - 84
+    });
 
-        var iscroll = new IScroll('.container');
+    $('#goBack').click(function () {
+      history.go(-1);
+    });
 
-        $('.backtop').click(function(){
-            iscroll.scrollTo(0,0,500);
-        });
+    var iscroll = new IScroll('.container');
 
-        $('.nav').click(function(eve){
-            var $tar = $(eve.target);
+    $('.backtop').click(function () {
+      iscroll.scrollTo(0, 0, 500);
+    });
 
-            $('.tab').removeClass('active');
-            $tar.addClass('active');
+    $('.nav').click(function (eve) {
+      var $tar = $(eve.target);
 
-            var tabId = $tar.data('id');
-            iscroll.scrollToElement('#' + tabId, 500);
-        })
+      $('.tab').removeClass('active');
+      $tar.addClass('active');
+
+      var tabId = $tar.data('id');
+      iscroll.scrollToElement('#' + tabId, 500);
     })
+  }
 </script>
 </body>
 </html>

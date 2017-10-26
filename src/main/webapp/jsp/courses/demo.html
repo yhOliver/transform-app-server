@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
     <meta content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no,minimal-ui" name="viewport">
-    <title>Neutron</title>
+    <title>美峰云课堂</title>
     <link href="/asserts/style.css" rel="stylesheet">
 </head>
 <body>
@@ -12,38 +12,47 @@
         <div id="Skeleton" class="g-page">
             <div class="m-header">
                 <div id="goBack" class="left"><span class="icon i-back"></span></div>
-                <div class="middle">课程</div>
+                <div class="middle">项目一：机床电器元件</div>
                 <div class="right"></div>
             </div>
             <div class="nav">
-                <div data-id="tab-1" class="tab active">学习任务书</div>
-                <div data-id="tab-2" class="tab">任务准备</div>
+                <div data-id="tab-1" class="tab active">学习项目书</div>
+                <div data-id="tab-2" class="tab">项目准备</div>
                 <div data-id="tab-3" class="tab">计划与决策</div>
                 <div data-id="tab-4" class="tab">实施与监控</div>
                 <div data-id="tab-5" class="tab">总结与评价</div>
             </div>
-            <div class="container">
+            <div id="loading">加载中，请稍后...</div>
+            <div class="container" style="display: none;">
                 <div>
                     <div class="section" id="tab-1">
-                        <div class="title nobordertop">学习任务书</div>
-                        <div class="body"><span>《机器人操作》围绕机器人多指抓取和装配操作阐明机器人操作的理论基础和规划控制方法。《机器人操作》大致可分为三个部分。包括了装配顺序规划，装配运动规划和量子的原型等内容。</span></div>
+                        <div class="title nobordertop">学习项目书</div>
+                        <div class="body"><span>熟悉数控机床常用低压电器元器件的类型和结构<br>熟悉数控机床常用低压电器元器件的使用方法<br>掌握常用低压电器的工作原理，图形符号及用途<br>了解各低压电器的技术参数，以便正确选取电器</span></div>
                     </div>
                     <div class="section" id="tab-2">
-                        <div class="title">任务准备</div>
-                        <div class="body"><span>长期致力于机械工程中机电控制与自动化及其有关理论和技术的研究。他在机器人、精密测量理论、智能制造和计算机几何方面做出突出贡献。建立了精密测量的极差极小化理论，提出了形状误差、轮廓误差和位置误差评定的“最小区域”统一判别准则和计算机智能仲裁方法；在机器人动力学和轨迹规划方面，建立了基于J－函数的碰撞、干涉检验方法，为机器人分析和运动规划提供了统一的准则和方法；开发了机器人离线编程系统HOLPS，较好解决了机器人应用工程的若干关键技术问题；建立了点接触约束的机器人操作定性分析理论，为机器人操作规划提供了有效的分析工具。</span></div>
+                        <div class="title">项目准备</div>
+                        <div class="body"><span>&nbsp&nbsp&nbsp&nbsp<strong>工作对象：</strong>低压短路器、按钮、限位开关、熔断器、接触器、继电器等数控机床常用低压电器元件</span><p>&nbsp&nbsp&nbsp&nbsp<strong>工具和学习材料:</strong>螺钉旋具、尖嘴钳和万用表等、教师准备好学生要填写的考核表格</p></div>
                     </div>
                     <div class="section" id="tab-3">
                         <div class="title">计划与决策</div>
-                        <div class="body"><span>blablabla</span></div>
+                        <div class="body">
+						<span><p>&nbsp&nbsp&nbsp&nbsp<strong>教学方法：</strong>应用模拟工厂生产实际的教学模式进行项目教学，对数控机床常用低压电器元件进行简单的拆装、接线、检测、验证等工作。</p></span>
+                        </div>
                     </div>
                     <div class="section" id="tab-4">
                         <div class="title">实施与监控</div>
-                        <div class="body"><span>blablabla</span></div>
+                        <div class="body">
+						<button class="clink" data-url="./daoyi1.html">导引1：低压断路器</button>
+						</div>
                     </div>
                     <div class="section" id="tab-5">
                         <div class="title">总结与评价</div>
-                        <div class="body"><span>blablabla</span></div>
+                        <div class="body"><span>中央空调的开停机并不象家用空调一样简单，而是要经过严格的训练与实践才能完成的。在工艺性空调中，各别错误操作可能给企业与公司带来巨大的损失。大型企业的中央空调运行费用每个小时高达2000元，良好的操作习惯对于节省运行费用有很大的帮助。</span></div>
                     </div>
+
+
+
+
                 </div>
             </div>
             <div class="backtop"><span class="icon i-back"></span></div>
@@ -53,31 +62,38 @@
 <script src="/asserts/iscroll.js"></script>
 <script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
 <script>
-    $(function(){
-        $('.container').css({
-            height : innerHeight - 84
-        });
+    window.onload = function() {
+    $('#loading').hide();
 
-        $('#goBack').click(function(){
-            history.go(-1);
-        });
+    $('.container').show().css({
+      height: innerHeight - 84
+    });
 
-        var iscroll = new IScroll('.container');
+    $('#goBack').click(function () {
+      history.go(-1);
+    });
 
-        $('.backtop').click(function(){
-            iscroll.scrollTo(0,0,500);
-        });
+    var iscroll = new IScroll('.container');
 
-        $('.nav').click(function(eve){
-            var $tar = $(eve.target);
+    $('.backtop').click(function () {
+      iscroll.scrollTo(0, 0, 500);
+    });
 
-            $('.tab').removeClass('active');
-            $tar.addClass('active');
+    $('.nav').click(function (eve) {
+      var $tar = $(eve.target);
 
-            var tabId = $tar.data('id');
-            iscroll.scrollToElement('#' + tabId, 500);
-        })
+      $('.tab').removeClass('active');
+      $tar.addClass('active');
+
+      var tabId = $tar.data('id');
+      iscroll.scrollToElement('#' + tabId, 500);
     })
+	
+	$(".clink").click(function(){
+		location.href = $(this).data("url");
+	})
+  }
 </script>
+
 </body>
 </html>
